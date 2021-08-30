@@ -4,7 +4,8 @@ This module accepts username and password to signup.
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
-
+from userAccount import open_userAccount
+from adminAccount import open_adminAccount
 signUp = Tk()
 signUp.title("SIGNUP")
 # resolution of the window changes
@@ -82,13 +83,30 @@ def create_my_account():
         This function alerts the user if he/she gives invalid details or leaves entries empty.
         :return: None
         """
-        if f_nam_entry.get() == "" and l_nam_entry.get() == "" and user_name_entry.get() == "" and \
+        # checking whether entered information in 'Contact' entry are digits or not
+        for check in contact_entry.get():
+            if check.isdigit():
+                inserted_info = True
+            else:
+                inserted_info = False
+                break
+
+        if f_nam_entry.get() == "" and l_nam_entry.get() == "" and user_name_entry.get() == "" and contact_entry.get() =="" and \
                 password_entry.get() == "" and conf_password_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill all boxes.")
+
         elif f_nam_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill first name box.")
+
         elif l_nam_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill last name box.")
+
+        elif contact_entry.get() == "":
+            messagebox.showwarning("EMPTY! ", "Please , fill  confirm password box.")
+
+        elif inserted_info is False:
+            messagebox.showerror("INVALID!", "Please, insert numbers in contact box.")
+
         elif user_name_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill  username box.")
 
@@ -101,8 +119,36 @@ def create_my_account():
         # checking password and confirm password match or not
         elif conf_password_entry.get() != password_entry.get():
             messagebox.showerror("INCORRECT PASSWORD! ", "Password and Confirm password do not match. Please, enter again.")
+
         else:
             messagebox.showinfo("Account Created", "Congratulation! Your account has been created successfully.")
+            #-------------All details are inserted into the table of Database i.e registration_details-------------
+            connect_me = sqlite3.connect("Accounts_details.db")
+            cu = connect_me.cursor()
+            # inserting details into the table
+            cu.execute("INSERT INTO registration_details VALUES(:f_name, :l_name, :gender_type,"
+                       ":contact_num, :username_entered, :password_entered)", {
+                'f_name':f_nam_entry.get(),
+                'l_name':l_nam_entry.get(),
+                'gender_type':selected_gender,
+                'contact_num':contact_entry.get(),
+                'username_entered':user_name_entry.get(),
+                'password_entered':password_entry.get()
+            })
+
+            # filling all entry fields or not
+            print("Information are inserted successfully.")
+            messagebox.showinfo("Records insertion", "Information have been inserted successfully.")
+            connect_me.commit()
+            connect_me.close()
+            # clearing the entry fields after inserting info
+            user_name_entry.delete(0, END)
+            l_nam_entry.delete(0, END)
+            #selected_gender.delete(0, END)
+            contact_entry.delete(0, END)
+            user_name_entry.delete(0, END)
+            password_entry.delete(0, END)
+
             # revealing Signup window after creating the account for login
             signUp.deiconify()
             # quitting the Registration Form window after successfully creating account.
@@ -201,7 +247,7 @@ def create_my_account():
                              font=("Copper", 24, 'bold'))
         previous_window_btn.grid(row=23, column=1)
 
-        # drop down menu for gender selection
+        # ---------------------------------drop down menu for gender selection--------------------------------------
         def dropDown():
             """
             This function creates drop down menu including Male, Female , Others and Prefer not to say
@@ -228,15 +274,15 @@ def create_my_account():
             l_nam_entry.grid(row=5, column=1, ipadx=60, ipady=3)
             contact_entry = Entry(my_frame, bg="#474747", fg="white", font=("cambria", 16, 'italic'))
             contact_entry.grid(row=9, column=1, ipadx=60, ipady=3)
-            user_name_entry = Entry(my_frame, bd=2, bg="#FFD39B", fg="white", textvariable=username,
+            user_name_entry = Entry(my_frame, bd=2, bg="#FFD39B", fg="black", textvariable=username,
                                     font=("cambria", 16, 'italic'))
             user_name_entry.grid(row=11, column=1, ipadx=60, ipady=3)
 
-            password_entry = Entry(my_frame, bd=2, bg="#474747", textvariable=password, show="•",
+            password_entry = Entry(my_frame, bd=2, bg="#474747", textvariable=password, show="•", fg="white",
                                    font=("cambria", 16, 'italic'))
             password_entry.grid(row=13, column=1, ipadx=60, ipady=3)
 
-            conf_password_entry = Entry(my_frame, bd=2, bg="#FFD39B", fg="white", textvariable=confirm_password,
+            conf_password_entry = Entry(my_frame, bd=2, bg="#FFD39B", fg="black", textvariable=confirm_password,
                                         show="•", font=("cambria", 16, 'italic'))
             conf_password_entry.grid(row=15, column=1, ipadx=60, ipady=3)
         except (NameError, AttributeError, ValueError) as e:
@@ -293,15 +339,30 @@ def submit():
     :return:None
     """
 
-    if (username_entry.get() == "Enter Username" and password_entry.get() == "Enter Password") or (username_entry.get() == "" and password_entry.get() == ""):
+    if (username_entry.get() == "Enter Username" and password_entry_signup.get() == "Enter Password") or (username_entry.get() == "" and password_entry_signup.get() == ""):
         messagebox.showwarning("Error", "Please, fill both username and password boxes.")
     elif username_entry.get() == "" or username_entry.get() == "Enter Username":
         messagebox.showerror("Error", "Please, fill username box.")
-    elif password_entry.get() == "" or password_entry.get() == "Enter Password":
+    elif password_entry_signup.get() == "" or password_entry_signup.get() == "Enter Password":
         messagebox.showerror("Error", "Please, fill password box.")
-    else:
-        messagebox.showinfo("Signed up", "Provided credentials are correct.")
+    elif username_entry.get() == "admin" and password_entry_signup.get() == "admin":
+        signUp.withdraw()
+        open_adminAccount()
 
+    else:
+        #messagebox.showinfo("Signed up", "Provided credentials are correct.")
+
+        connector = sqlite3.connect("Accounts_details.db")
+        cur = connector.cursor()
+        try:
+            cur.execute("""SELECT username and password from registration_details""")
+            if username_entry.get() == username and password_entry_signup.get() == password:
+                open_userAccount()
+        except BaseException as msg:
+            print(type(msg))
+            print(msg)
+        connector.commit()
+        connector.close()
 # for creating empty rows for a systematic management of entries for a better look
 def empty():
     """
@@ -336,8 +397,8 @@ def clear_password_entry(event):
     :param event: int
     :return: None
     """
-    password_entry.delete(0, END)
-    password_entry.configure(show="•")
+    password_entry_signup.delete(0, END)
+    password_entry_signup.configure(show="•")
 
 
 # function creating to hide password as checked out in check button.
@@ -346,7 +407,7 @@ def hide_password():
     This hides password.
     :return: None
     """
-    password_entry.configure(show="•")
+    password_entry_signup.configure(show="•")
     check_button.configure(command=show_password)
 
 
@@ -356,16 +417,16 @@ def show_password():
     This shows paswword as checked out in check button.
     :return: None
     """
-    password_entry.configure(show="")
+    password_entry_signup.configure(show="")
     check_button.configure(command=hide_password)
 
 try:
 
-    # adding username label
+    # ------------------------------------------- adding username label-------------------------------------------
     username_label = Label(my_frame, text="Username", font=("Cambria", 22, 'bold'), bg="yellow", fg="black")
     username_label.pack(ipadx=2, ipady=2)
     empty()
-    # adding username entry
+    # -------------------------------------------adding username entry-------------------------------------------
     username_type = StringVar()
     username_entry = Entry(my_frame, width=23, font=("Times New Roman", 19, 'italic'), textvariable=username_type)
     username_entry.pack(ipady=4)
@@ -375,19 +436,19 @@ try:
     username_entry.bind("<FocusIn>", clear_username_entry)
     empty()
 
-    # adding password label
+    # -------------------------------------------adding password label-------------------------------------------
     password_label = Label(my_frame, text="Password", font=("Cambria", 22, 'bold'), bg="yellow", fg="black")
     password_label.pack(ipadx=2, ipady=2)
     empty()
-    # adding password entry
+    # -------------------------------------------adding password entry-------------------------------------------
     password_type = StringVar()
-    password_entry = Entry(my_frame, width=23, font=("Times New Roman", 19, 'italic'),
+    password_entry_signup = Entry(my_frame, width=23, font=("Times New Roman", 19, 'italic'),
                            textvariable=password_type, show="")
-    password_entry.pack(ipady=4)
-    password_entry.insert(0, "Enter Password")
+    password_entry_signup.pack(ipady=4)
+    password_entry_signup.insert(0, "Enter Password")
 
     # on clicking 'tab' key, FocusIn allows to enter in password entry
-    password_entry.bind("<FocusIn>", clear_password_entry)
+    password_entry_signup.bind("<FocusIn>", clear_password_entry)
     empty()
 
 except (AttributeError, NameError, ValueError, TypeError, SyntaxError) as msg:
