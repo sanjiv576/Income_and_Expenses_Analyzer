@@ -3,8 +3,9 @@ This module accepts username and password to signup.
 """
 from tkinter import *
 from tkinter import messagebox
-
-
+import sqlite3
+from userAccount import open_userAccount
+from adminAccount import open_adminAccount
 signUp = Tk()
 signUp.title("SIGNUP")
 # resolution of the window changes
@@ -41,7 +42,7 @@ def create_my_account():
     register = Toplevel()
     register.title("Registration Form")
     register.iconbitmap("agree_0.ico")
-    register.geometry("740x749")
+    register.geometry("740x800")
     # not allowing to maximize the Registration Form
     register.resizable(0, 0)
     register.configure(bg="#CDC8B1")  # #CDC8B1 = silkcorn color
@@ -53,6 +54,26 @@ def create_my_account():
     img_button = Button(register, image=create_image)
     img_button.grid(row=1, column=3)'''
 
+    # ------------------------database use for Registration Form begins from here------------------
+    connector = sqlite3.connect("Accounts_details.db")
+    cur = connector.cursor()
+    """
+    # creating a table
+    cur.execute('''CREATE TABLE registration_details(
+                                                     first_name text,
+                                                     last_name text,
+                                                     gender text,
+                                                     contact integer,
+                                                     username text,
+                                                     password text)''')
+    print("Table has been created successfully.")
+    """
+    # ------------------------ different functions for database use begins from here------------------
+
+
+    # ------------------------functions for database use of Registration Form ends from here------------------
+
+    # =================================== GUI of Registration Form begins =====================================
     # frame is created to maintain buttons and labels in a systematic arrangement
     my_frame = Frame(register, bg="#CDC8B1")
     my_frame.pack()
@@ -62,13 +83,30 @@ def create_my_account():
         This function alerts the user if he/she gives invalid details or leaves entries empty.
         :return: None
         """
-        if f_nam_entry.get() == "" and l_nam_entry.get() == "" and user_name_entry.get() == "" and \
+        # checking whether entered information in 'Contact' entry are digits or not
+        for check in contact_entry.get():
+            if check.isdigit():
+                inserted_info = True
+            else:
+                inserted_info = False
+                break
+
+        if f_nam_entry.get() == "" and l_nam_entry.get() == "" and user_name_entry.get() == "" and contact_entry.get() =="" and \
                 password_entry.get() == "" and conf_password_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill all boxes.")
+
         elif f_nam_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill first name box.")
+
         elif l_nam_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill last name box.")
+
+        elif contact_entry.get() == "":
+            messagebox.showwarning("EMPTY! ", "Please , fill  confirm password box.")
+
+        elif inserted_info is False:
+            messagebox.showerror("INVALID!", "Please, insert numbers in contact box.")
+
         elif user_name_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill  username box.")
 
@@ -77,10 +115,40 @@ def create_my_account():
 
         elif conf_password_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill  confirm password box.")
-        elif conf_password_entry.get() != password_entry.get():  # checking password and confirm password match or not
+
+        # checking password and confirm password match or not
+        elif conf_password_entry.get() != password_entry.get():
             messagebox.showerror("INCORRECT PASSWORD! ", "Password and Confirm password do not match. Please, enter again.")
+
         else:
             messagebox.showinfo("Account Created", "Congratulation! Your account has been created successfully.")
+            #-------------All details are inserted into the table of Database i.e registration_details-------------
+            connect_me = sqlite3.connect("Accounts_details.db")
+            cu = connect_me.cursor()
+            # inserting details into the table
+            cu.execute("INSERT INTO registration_details VALUES(:f_name, :l_name, :gender_type,"
+                       ":contact_num, :username_entered, :password_entered)", {
+                'f_name':f_nam_entry.get(),
+                'l_name':l_nam_entry.get(),
+                'gender_type':selected_gender,
+                'contact_num':contact_entry.get(),
+                'username_entered':user_name_entry.get(),
+                'password_entered':password_entry.get()
+            })
+
+            # filling all entry fields or not
+            print("Information are inserted successfully.")
+            messagebox.showinfo("Records insertion", "Information have been inserted successfully.")
+            connect_me.commit()
+            connect_me.close()
+            # clearing the entry fields after inserting info
+            user_name_entry.delete(0, END)
+            l_nam_entry.delete(0, END)
+            #selected_gender.delete(0, END)
+            contact_entry.delete(0, END)
+            user_name_entry.delete(0, END)
+            password_entry.delete(0, END)
+
             # revealing Signup window after creating the account for login
             signUp.deiconify()
             # quitting the Registration Form window after successfully creating account.
@@ -130,108 +198,126 @@ def create_my_account():
 
 
     # --------------------------------------------labels are defined-------------------------------------------
-    empty_row()
-    heading_label = Label(my_frame, text="CREATE AN ACCOUNT", font=("copperplate", 32, 'bold'),
-                          bg="#CDC8B1", fg="green")
-    heading_label.grid(row=1, column=1)
-    # rows = 2, 3 are left for empty for future use
-    empty_row()
-    f_name = Label(my_frame, text="First Name :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
-    f_name.grid(row=3, column=0)
-    empty_row()
-    l_name = Label(my_frame, text="Last Name :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
-    l_name.grid(row=5, column=0)
-    empty_row()
-    gender_label = Label(my_frame, text="Gender :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
-    gender_label.grid(row=7, column=0)
-    empty_row()
-    user_name = Label(my_frame, text="Username :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
-    username = StringVar()
-    user_name.grid(row=9, column=0)
-    empty_row()
-    password_label = Label(my_frame, text="Password :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
-    password = StringVar()
-    password_label.grid(row=11, column=0)
-    empty_row()
-    conf_password_label = Label(my_frame, text="Confirm Password :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
-    confirm_password = StringVar()
-    conf_password_label.grid(row=13, column=0)
-    empty_row()
+    try:
+        empty_row()
+        heading_label = Label(my_frame, text="CREATE AN ACCOUNT", font=("copperplate", 32, 'bold'),
+                              bg="#CDC8B1", fg="green")
+        heading_label.grid(row=1, column=1)
+        # rows = 2, 3 are left for empty for future use
+        empty_row()
+        f_name = Label(my_frame, text="First Name :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
+        f_name.grid(row=3, column=0)
+        empty_row()
+        l_name = Label(my_frame, text="Last Name :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
+        l_name.grid(row=5, column=0)
+        empty_row()
+        gender_label = Label(my_frame, text="Gender :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
+        gender_label.grid(row=7, column=0)
+        empty_row()
+        contact_label = Label(my_frame, text="Contact :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
+        contact_label.grid(row=9, column=0)
+        empty_row()
+        user_name = Label(my_frame, text="Username :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
+        username = StringVar()
+        user_name.grid(row=11, column=0)
+        empty_row()
+        password_label = Label(my_frame, text="Password :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
+        password = StringVar()
+        password_label.grid(row=13, column=0)
+        empty_row()
+        conf_password_label = Label(my_frame, text="Confirm Password :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
+        confirm_password = StringVar()
+        conf_password_label.grid(row=15, column=0)
+        empty_row()
+    except (AttributeError,NameError, SyntaxError, TypeError, ValueError ) as guide:
+        print(guide.__class__)
+        print(guide)
+    finally:
 
-    # --------------------------------------------buttons are defined along with events--------------------------------
-    submit_button = Button(my_frame, text="SUBMIT", highlightbackground="green", command=show_message,
-                           font=("Century Gothic", 24, 'bold'))
-    submit_button.grid(row=15, column=1, ipadx=18, ipady=3)
-    empty_row()
-    exit_button = Button(my_frame, text="EXIT", highlightbackground="red", command=show_quit,
-                         font=("Century Gothic", 24, 'bold'))
-    exit_button.grid(row=17, column=1, ipadx=18, ipady=3, rowspan=2)
-    empty_row()
-    previous_window_btn = Button(my_frame, text="<<<", highlightbackground="red", command=previous_window,
-                         font=("Copper", 24, 'bold'))
-    previous_window_btn.grid(row=21, column=1)
+        # --------------------------------------------buttons are defined along with events--------------------------------
+        submit_button = Button(my_frame, text="SUBMIT", highlightbackground="green", command=show_message,
+                               font=("Century Gothic", 24, 'bold'))
+        submit_button.grid(row=17, column=1, ipadx=18, ipady=3)
+        empty_row()
+        exit_button = Button(my_frame, text="EXIT", highlightbackground="red", command=show_quit,
+                             font=("Century Gothic", 24, 'bold'))
+        exit_button.grid(row=19, column=1, ipadx=18, ipady=3, rowspan=2)
+        empty_row()
+        previous_window_btn = Button(my_frame, text="<<<", highlightbackground="red", command=previous_window,
+                             font=("Copper", 24, 'bold'))
+        previous_window_btn.grid(row=23, column=1)
 
-    # drop down menu for gender
-    def dropDown():
-        """
-        This function creates drop down menu including Male, Female , Others and Prefer not to say
-        :return: string
-        """
-        gender = ["Male", "Female", "Others", "Prefer not to say"]
-        indicator = StringVar()
-        indicator.set("Male")
-        dropper = OptionMenu(my_frame, indicator, *gender)
-        dropper.grid(row=7, column=1, ipadx=60, ipady=3)
-        dropper.config(bg="#CDC8B1")
-        return indicator
+        # ---------------------------------drop down menu for gender selection--------------------------------------
+        def dropDown():
+            """
+            This function creates drop down menu including Male, Female , Others and Prefer not to say
+            :return: string
+            """
+            gender = ["Male", "Female", "Others", "Prefer not to say"]
+            indicator = StringVar()
+            indicator.set("Male")
+            dropper = OptionMenu(my_frame, indicator, *gender)
+            dropper.grid(row=7, column=1, ipadx=60, ipady=3)
+            dropper.config(bg="#CDC8B1")
+            return indicator.get()
+        selected_gender = dropDown()
+        print(selected_gender)
 
-    dropDown()
 
+        # --------------------------------------------Entries are defined-----------------------------------
+        try:
+            f_nam_entry = Entry(my_frame, bg="#474747", fg="white", font=("cambria", 16, 'italic'))
+            f_nam_entry.grid(row=3, column=1, ipadx=60, ipady=3)
 
-    # --------------------------------------------Entries are defined-----------------------------------
-    f_nam_entry = Entry(my_frame, bg="#474747", fg="white", font=("cambria", 16, 'italic'))
-    f_nam_entry.grid(row=3, column=1, ipadx=60, ipady=3)
+            l_nam_entry = Entry(my_frame, bd=2, bg="#FFD39B", font=("cambria", 16, 'italic'))
+            #  #FFD39B= burlywood1
+            l_nam_entry.grid(row=5, column=1, ipadx=60, ipady=3)
+            contact_entry = Entry(my_frame, bg="#474747", fg="white", font=("cambria", 16, 'italic'))
+            contact_entry.grid(row=9, column=1, ipadx=60, ipady=3)
+            user_name_entry = Entry(my_frame, bd=2, bg="#FFD39B", fg="black", textvariable=username,
+                                    font=("cambria", 16, 'italic'))
+            user_name_entry.grid(row=11, column=1, ipadx=60, ipady=3)
 
-    l_nam_entry = Entry(my_frame, bd=2, bg="#FFD39B", font=("cambria", 16, 'italic'))
-    #  #FFD39B= burlywood1
-    l_nam_entry.grid(row=5, column=1, ipadx=60, ipady=3)
+            password_entry = Entry(my_frame, bd=2, bg="#474747", textvariable=password, show="•", fg="white",
+                                   font=("cambria", 16, 'italic'))
+            password_entry.grid(row=13, column=1, ipadx=60, ipady=3)
 
-    user_name_entry = Entry(my_frame, bd=2, bg="#474747", fg="white", textvariable=username,
-                            font=("cambria", 16, 'italic'))
-    user_name_entry.grid(row=9, column=1, ipadx=60, ipady=3)
+            conf_password_entry = Entry(my_frame, bd=2, bg="#FFD39B", fg="black", textvariable=confirm_password,
+                                        show="•", font=("cambria", 16, 'italic'))
+            conf_password_entry.grid(row=15, column=1, ipadx=60, ipady=3)
+        except (NameError, AttributeError, ValueError) as e:
+            print(e.__class__)
+            print(e)
+        else:
 
-    password_entry = Entry(my_frame, bd=2, bg="#FFD39B", textvariable=password, show="•",
-                           font=("cambria", 16, 'italic'))
-    password_entry.grid(row=11, column=1, ipadx=60, ipady=3)
+            # -----------------------------------------Slider added------------------------------------
+            def geometry_change():
+                """
+                This changes geometry of Registration Form as the user wants.
+                :return: None
+                """
+                register.geometry(str(length_scale.get()) + "x" + str(height_scale.get()))
 
-    conf_password_entry = Entry(my_frame, bd=2, bg="#474747", fg="white", textvariable=confirm_password,
-                                show="•", font=("cambria", 16, 'italic'))
-    conf_password_entry.grid(row=13, column=1, ipadx=60, ipady=3)
+            empty_row()
+            height_scale = Scale(my_frame, from_=100, to=1000, orient=VERTICAL)
+            height_scale.grid(row=21, column=3)
+            height_scale.set(800)  # this set function shows first geometry of height
+            Label(my_frame, text="Height", bg="#CDC8B1").grid(row=20, column=3)
+            empty_row()
+            length_scale = Scale(my_frame, from_=50, to=1500, orient=HORIZONTAL)
+            length_scale.grid(row=21, column=0)
+            Label(my_frame, text="Length", bg="#CDC8B1").grid(row=20, column=0)
+            length_scale.set(740)  # this shows first geometry of length of the window
 
-    # Slider added
-    def geometry_change():
-        """
-        This changes geometry of Registration Form as the user wants.
-        :return: None
-        """
-        register.geometry(str(length_scale.get()) + "x" + str(height_scale.get()))
-
-    empty_row()
-    height_scale = Scale(my_frame, from_=100, to=1000, orient=VERTICAL)
-    height_scale.grid(row=19, column=3)
-    height_scale.set(749)  # this set function shows first geometry of height
-    Label(my_frame, text="Height", bg="#CDC8B1").grid(row=20, column=3)
-    empty_row()
-    length_scale = Scale(my_frame, from_=50, to=1500, orient=HORIZONTAL)
-    length_scale.grid(row=19, column=0)
-    Label(my_frame, text="Length", bg="#CDC8B1").grid(row=20, column=0)
-    length_scale.set(740)  # this shows first geometry of length of the window
-
-    geometry_change_btn = Button(my_frame, text="Change window size", command=geometry_change,
-                                 padx=9, pady=9, highlightbackground="yellow")
-    geometry_change_btn.grid(row=19, column=1)
-    empty_row()
-    register.mainloop()
+            geometry_change_btn = Button(my_frame, text="Change window size", command=geometry_change,
+                                         padx=9, pady=9, highlightbackground="yellow")
+            geometry_change_btn.grid(row=21, column=1)
+            empty_row()
+            # committing changes
+            connector.commit()
+            # closing connection between database and above created table
+            connector.close()
+            register.mainloop()
 # -----------------------------------Coding for Registration Form ends ----------------------------------
 
 row_num = 0
@@ -253,15 +339,30 @@ def submit():
     :return:None
     """
 
-    if (username_entry.get() == "Enter Username" and password_entry.get() == "Enter Password") or (username_entry.get() == "" and password_entry.get() == ""):
+    if (username_entry.get() == "Enter Username" and password_entry_signup.get() == "Enter Password") or (username_entry.get() == "" and password_entry_signup.get() == ""):
         messagebox.showwarning("Error", "Please, fill both username and password boxes.")
     elif username_entry.get() == "" or username_entry.get() == "Enter Username":
         messagebox.showerror("Error", "Please, fill username box.")
-    elif password_entry.get() == "" or password_entry.get() == "Enter Password":
+    elif password_entry_signup.get() == "" or password_entry_signup.get() == "Enter Password":
         messagebox.showerror("Error", "Please, fill password box.")
-    else:
-        messagebox.showinfo("Signed up", "Provided credentials are correct.")
+    elif username_entry.get() == "admin" and password_entry_signup.get() == "admin":
+        signUp.withdraw()
+        open_adminAccount()
 
+    else:
+        #messagebox.showinfo("Signed up", "Provided credentials are correct.")
+
+        connector = sqlite3.connect("Accounts_details.db")
+        cur = connector.cursor()
+        try:
+            cur.execute("""SELECT username and password from registration_details""")
+            if username_entry.get() == username and password_entry_signup.get() == password:
+                open_userAccount()
+        except BaseException as msg:
+            print(type(msg))
+            print(msg)
+        connector.commit()
+        connector.close()
 # for creating empty rows for a systematic management of entries for a better look
 def empty():
     """
@@ -296,8 +397,8 @@ def clear_password_entry(event):
     :param event: int
     :return: None
     """
-    password_entry.delete(0, END)
-    password_entry.configure(show="•")
+    password_entry_signup.delete(0, END)
+    password_entry_signup.configure(show="•")
 
 
 # function creating to hide password as checked out in check button.
@@ -306,7 +407,7 @@ def hide_password():
     This hides password.
     :return: None
     """
-    password_entry.configure(show="•")
+    password_entry_signup.configure(show="•")
     check_button.configure(command=show_password)
 
 
@@ -316,16 +417,16 @@ def show_password():
     This shows paswword as checked out in check button.
     :return: None
     """
-    password_entry.configure(show="")
+    password_entry_signup.configure(show="")
     check_button.configure(command=hide_password)
 
 try:
 
-    # adding username label
+    # ------------------------------------------- adding username label-------------------------------------------
     username_label = Label(my_frame, text="Username", font=("Cambria", 22, 'bold'), bg="yellow", fg="black")
     username_label.pack(ipadx=2, ipady=2)
     empty()
-    # adding username entry
+    # -------------------------------------------adding username entry-------------------------------------------
     username_type = StringVar()
     username_entry = Entry(my_frame, width=23, font=("Times New Roman", 19, 'italic'), textvariable=username_type)
     username_entry.pack(ipady=4)
@@ -335,19 +436,19 @@ try:
     username_entry.bind("<FocusIn>", clear_username_entry)
     empty()
 
-    # adding password label
+    # -------------------------------------------adding password label-------------------------------------------
     password_label = Label(my_frame, text="Password", font=("Cambria", 22, 'bold'), bg="yellow", fg="black")
     password_label.pack(ipadx=2, ipady=2)
     empty()
-    # adding password entry
+    # -------------------------------------------adding password entry-------------------------------------------
     password_type = StringVar()
-    password_entry = Entry(my_frame, width=23, font=("Times New Roman", 19, 'italic'),
+    password_entry_signup = Entry(my_frame, width=23, font=("Times New Roman", 19, 'italic'),
                            textvariable=password_type, show="")
-    password_entry.pack(ipady=4)
-    password_entry.insert(0, "Enter Password")
+    password_entry_signup.pack(ipady=4)
+    password_entry_signup.insert(0, "Enter Password")
 
     # on clicking 'tab' key, FocusIn allows to enter in password entry
-    password_entry.bind("<FocusIn>", clear_password_entry)
+    password_entry_signup.bind("<FocusIn>", clear_password_entry)
     empty()
 
 except (AttributeError, NameError, ValueError, TypeError, SyntaxError) as msg:
