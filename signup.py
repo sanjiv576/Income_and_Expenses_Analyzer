@@ -15,6 +15,22 @@ signUp.iconbitmap("login.ico")
 signUp.configure(bg="white")
 # allowing to the user to maximize the window resolution
 signUp.resizable(1, 1)
+# ------------------------database use for Registration Form begins from here------------------
+connector = sqlite3.connect("Accounts_details_holder.db")
+cur = connector.cursor()
+"""
+# creating a table
+cur.execute('''CREATE TABLE registration_details_holder(
+                                                 first_name text,
+                                                 last_name text,
+                                                 gender text,
+                                                 contact integer,
+                                                 username text,
+                                                 password text)''')
+print("Table has been created successfully.")
+
+"""
+# ------------------------ different functions for database use begins from here------------------
 
 # Note : 572 x 490 pixel image
 left_img = PhotoImage(file="login_img.png")
@@ -54,10 +70,10 @@ def create_my_account():
     img_button = Button(register, image=create_image)
     img_button.grid(row=1, column=3)'''
 
-    # ------------------------database use for Registration Form begins from here------------------
+    """# ------------------------database use for Registration Form begins from here------------------
     connector = sqlite3.connect("Accounts_details.db")
     cur = connector.cursor()
-    """
+    
     # creating a table
     cur.execute('''CREATE TABLE registration_details(
                                                      first_name text,
@@ -67,8 +83,8 @@ def create_my_account():
                                                      username text,
                                                      password text)''')
     print("Table has been created successfully.")
-    """
-    # ------------------------ different functions for database use begins from here------------------
+
+    # ------------------------ different functions for database use begins from here------------------"""
 
 
     # ------------------------functions for database use of Registration Form ends from here------------------
@@ -122,21 +138,24 @@ def create_my_account():
 
         else:
             messagebox.showinfo("Account Created", "Congratulation! Your account has been created successfully.")
-            #-------------All details are inserted into the table of Database i.e registration_details-------------
-            connect_me = sqlite3.connect("Accounts_details.db")
+
+            # Insertion database is here
+
+            # -------------All details are inserted into the table of Database i.e registration_details-------------
+            connect_me = sqlite3.connect("Accounts_details_holder.db")
             cu = connect_me.cursor()
             # inserting details into the table
-            cu.execute("INSERT INTO registration_details VALUES(:f_name, :l_name, :gender_type,"
-                       ":contact_num, :username_entered, :password_entered)", {
-                'f_name':f_nam_entry.get(),
-                'l_name':l_nam_entry.get(),
-                'gender_type':selected_gender,
-                'contact_num':contact_entry.get(),
-                'username_entered':user_name_entry.get(),
-                'password_entered':password_entry.get()
-            })
+            cu.execute("INSERT INTO registration_details_holder VALUES(:f_name, :l_name, :gender_type,"
+                         ":contact_num, :username_entered, :password_entered)", {
+                  'f_name':f_nam_entry.get(),
+                  'l_name':l_nam_entry.get(),
+                  'gender_type':selected_gender,
+                  'contact_num':contact_entry.get(),
+                  'username_entered':user_name_entry.get(),
+                  'password_entered':password_entry.get()
+              })
 
-            # filling all entry fields or not
+              # filling all entry fields or not
             print("Information are inserted successfully.")
             messagebox.showinfo("Records insertion", "Information have been inserted successfully.")
             connect_me.commit()
@@ -149,7 +168,7 @@ def create_my_account():
             user_name_entry.delete(0, END)
             password_entry.delete(0, END)
 
-            # revealing Signup window after creating the account for login
+         # revealing Signup window after creating the account for login
             signUp.deiconify()
             # quitting the Registration Form window after successfully creating account.
             register.destroy()
@@ -219,6 +238,7 @@ def create_my_account():
         empty_row()
         user_name = Label(my_frame, text="Username :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
         username = StringVar()
+        print(type(username))
         user_name.grid(row=11, column=0)
         empty_row()
         password_label = Label(my_frame, text="Password :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
@@ -229,7 +249,7 @@ def create_my_account():
         confirm_password = StringVar()
         conf_password_label.grid(row=15, column=0)
         empty_row()
-    except (AttributeError,NameError, SyntaxError, TypeError, ValueError ) as guide:
+    except (AttributeError, NameError, SyntaxError, TypeError, ValueError) as guide:
         print(guide.__class__)
         print(guide)
     finally:
@@ -313,11 +333,11 @@ def create_my_account():
                                          padx=9, pady=9, highlightbackground="yellow")
             geometry_change_btn.grid(row=21, column=1)
             empty_row()
-            # committing changes
-            connector.commit()
-            # closing connection between database and above created table
-            connector.close()
             register.mainloop()
+
+            # committing changes and closing
+
+
 # -----------------------------------Coding for Registration Form ends ----------------------------------
 
 row_num = 0
@@ -350,19 +370,21 @@ def submit():
         open_adminAccount()
 
     else:
-        #messagebox.showinfo("Signed up", "Provided credentials are correct.")
 
-        connector = sqlite3.connect("Accounts_details.db")
-        cur = connector.cursor()
-        try:
-            cur.execute("""SELECT username and password from registration_details""")
-            if username_entry.get() == username and password_entry_signup.get() == password:
-                open_userAccount()
-        except BaseException as msg:
-            print(type(msg))
-            print(msg)
-        connector.commit()
-        connector.close()
+        connetor = sqlite3.connect("Accounts_details_holder.db")
+        cur = connetor.cursor()
+        query="Select * from registration_details_holder where username=? and password=?"
+
+        cur.execute(query,(username_entry.get(), password_entry_signup.get()))
+        rows =cur.fetchall()
+        # checking whether it is empty or not, if empty shows error message , if no allows to login
+        if len(rows) > 0:
+         #   messagebox.showinfo("Account Created", "Login has been successfully done")
+            open_userAccount()
+        else:
+            messagebox.showerror("Error", "Invalid username and password.")
+
+
 # for creating empty rows for a systematic management of entries for a better look
 def empty():
     """
@@ -477,4 +499,8 @@ finally:
                              highlightbackground="red", padx=4)
         exit_button.pack()
 
+        # committing changes
+        connector.commit()
+        # closing connection between database and above created table
+        connector.close()
 signUp.mainloop()
