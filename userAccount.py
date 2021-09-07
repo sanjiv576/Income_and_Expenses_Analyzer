@@ -3,74 +3,130 @@ This module includes information of income and expenses of the user after login,
 which stores, manages, updates and accesses the information as the user provides.
 """
 from tkinter import *
-def open_userAccount():
-    myAccount = Tk()
-    myAccount.title("MY ACCOUNT")
-    # remaining to change icon
-    myAccount.iconbitmap("login.ico")
-    myAccount.geometry("1000x700")
-    myAccount.configure(bg="black")
-    myAccount.resizable(False, False)
+import sqlite3
 
+myAccount = Tk()
+myAccount.title("MY ACCOUNT")
+myAccount.iconbitmap("see.ico")
+myAccount.geometry("700x600")
+myAccount.configure(bg="black")
+myAccount.resizable(False, False)
+
+
+def open_profile_func():
+    """
+    This function continues to next module by hiding this module and  calling another function within it.
+    :return: None
+    """
+    myAccount.withdraw()
+    profile_win = Toplevel()
+    profile_win.title("MY PROFILE")
+    profile_win.iconbitmap("profile.ico")
+    profile_win.geometry("700x600")
+    profile_win.configure(bg="black")
+    profile_win.resizable(1, 1)
+
+    # frame is added
+    topFrame = Frame(profile_win, bg="yellow")
+    topFrame.place(x=10, y=10, width=680, height=80)
+    bottomFrame = Frame(profile_win, bg="red")
+    bottomFrame.place(x=10, y=100, width=680, height=490)
     #  ============================================== headline added ================================================
-    heading_img = PhotoImage(file="incomeAndExpenditure.png")
-    heading = Label(myAccount, text="INCOME AND EXPENSES ANALYZER", font=("Copperplate", 32, "bold"),
-                    bg="silver", bd=6, relief=RIDGE)
+    heading_img = PhotoImage(file="profile.png")
+    heading = Label(topFrame, text="MY PROFILE", font=("Copperplate", 32, "bold"),
+                    bg="green", fg="yellow", bd=6, relief=RIDGE)
     heading.pack(side=TOP, fill=X, expand=0)
     heading.config(image=heading_img, compound=LEFT)
 
-    # ============================================== different frames are added =========================================
-    left_frame = Frame(myAccount, bg="#7C7474", bd=6, relief=SOLID)
-    left_frame.place(x=20, y=70, width=250, height=600)
+    income = 0
+    spend = 0
+    balance = 0
 
-    right_profile_frame = Frame(myAccount, bg="#7C7474", bd=9, relief=SOLID)
-    right_profile_frame.place(x=300, y=70, width=670, height=600)
+    # ----------------------- labels are defined -----------------------
+    income_label = Label(bottomFrame, text="Income", font=("courier", 25, "bold"), fg="black", bg="red")
+    income_label.grid(row=0, column=0, columnspan=1, padx=50, pady=10)
+
+    spend_label = Label(bottomFrame, text="Expenses", font=("courier", 25, "bold"), fg="black",
+                         bg="red")
+    spend_label.grid(row=0, column=2, columnspan=1, padx=50, pady=10)
+
+    balance_label = Label(bottomFrame, text="Balance", font=("courier", 25, "bold"), fg="black",
+                         bg="red")
+    balance_label.grid(row=0, column=4, columnspan=1, padx=50, pady=10)
+
+    # ------------------------- values of respective labels are given ------------------------
+
+    income_value = Label(bottomFrame, text="$"+str(income), font=("courier", 25, "bold"), fg="black", bg="red")
+    income_value.grid(row=1, column=0, columnspan=1, padx=50, pady=10)
+
+    spend_value = Label(bottomFrame, text="$"+str(spend), font=("courier", 25, "bold"), fg="black",
+                        bg="red")
+    spend_value.grid(row=1, column=2, columnspan=1, padx=50, pady=10)
+
+    balance_value = Label(bottomFrame, text="$"+str(balance), font=("courier", 25, "bold"), fg="black",
+                          bg="red")
+    balance_value.grid(row=1, column=4, columnspan=1, padx=50, pady=10)
+
+    # ------------------------------------ Basic details of the user-------------------------------------
+    connect_me = sqlite3.connect("Accounts_details_holder.db")
+    # creating a cursor
+    cur = connect_me.cursor()
+    cur.execute("SELECT first_name, last_name, gender, contact FROM registration_details_holder")
+    fetch = cur.fetchall()
+    print(fetch)
+    profile_win.mainloop()
+
+def open_income_func():
+    """
+    This function continues to next module by hiding this module and  calling another function within it.
+    :return: None
+    """
+    myAccount.withdraw()
 
 
 
-    # ========================== functions with events are defined as buttons are clicked on ===========================
-    def myProfile():
-        print("My profile")
-
-        myProfile_label = Label(right_profile_frame, text="My Profile", bd=4, bg="yellow", fg="black",
-                                font=("Copperplate", 35, "bold"), relief=GROOVE)
-        myProfile_label.pack(fill=X, side=TOP)
-
-        myProfile_frame = Frame(right_profile_frame, bg="white")
-        myProfile_frame.place(x=10, y=55, width=635, height=518)
-
-    def income():
-        print("income")
-        income_label = Label(right_profile_frame, text="My Income", bd=4, bg="yellow", fg="black",
-                                font=("Copperplate", 35, "bold"), relief=GROOVE)
-        income_label.pack(fill=X, side=TOP)
-
-        income_frame = Frame(right_profile_frame, bg="white")
-        income_frame.place(x=10, y=55, width=635, height=518)
-        right_profile_frame.place_forget()
 
 
+def open_setting_func():
+    """
+    This function continues to next module by hiding this module and  calling another function within it.
+    :return: None
+    """
+    myAccount.withdraw()
 
-    # =================================== Buttons with events are defined in left_frame  ============================
 
-    myProfile_button = Button(left_frame, text="My Profile", font=("Times New Roman", 24, "bold"), command=myProfile,
-                              highlightbackground="green")
-    myProfile_button.grid(row=0, column=0, padx=54, pady=20, ipadx=4, ipady=6)
+#  ============================================== headline added ================================================
+heading_img = PhotoImage(file="incomeAndExpenditure.png")
+heading = Label(myAccount, text="INCOME AND EXPENSES ANALYZER", font=("Copperplate", 32, "bold"),
+                bg="silver", bd=6, relief=RIDGE)
+heading.pack(side=TOP, fill=X, expand=0)
+heading.config(image=heading_img, compound=LEFT)
 
-    income_button = Button(left_frame, text="Income", font=("Times New Roman", 24, "bold"), command=income,
-                           highlightbackground="green", fg="black")
-    income_button.grid(row=1, column=0, padx=54, pady=20, ipadx=4, ipady=6)
+# ============================================== different frames are added ===============================
+center_frame = Frame(myAccount, bg="#7C7474", bd=6, relief=SOLID)
+center_frame.place(x=180, y=70, width=330, height=500)
 
-    expenses_button = Button(left_frame, text="Expenses", font=("Times New Roman", 24, "bold"),
-                             highlightbackground="green", fg="black")
-    expenses_button.grid(row=2, column=0, padx=54, pady=20, ipadx=4, ipady=6)
 
-    setting_button = Button(left_frame, text="Setting", font=("Times New Roman", 24, "bold"),
-                            highlightbackground="green")
-    setting_button.grid(row=3, column=0, padx=54, pady=20, ipadx=4, ipady=6)
 
-    logout_button = Button(left_frame, text="Log Out", font=("Times New Roman", 24, "bold"),
-                            highlightbackground="green")
-    logout_button.grid(row=4, column=0, padx=54, pady=20, ipadx=4, ipady=6)
 
-    myAccount.mainloop()
+
+# =================================== Buttons with events are defined in left_frame  ============================
+
+myProfile_button = Button(center_frame, text="My Profile", font=("Times New Roman", 24, "bold"), command=open_profile_func,
+                          highlightbackground="green")
+myProfile_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+income_button = Button(center_frame, text="My Income", font=("Times New Roman", 24, "bold"), command=open_income_func,
+                       highlightbackground="green", fg="black")
+income_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+
+setting_button = Button(center_frame, text="My Setting", font=("Times New Roman", 24, "bold"), command=open_setting_func,
+                        highlightbackground="green")
+setting_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+logout_button = Button(center_frame, text="Log Out", font=("Times New Roman", 24, "bold"),
+                        highlightbackground="green")
+logout_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+myAccount.mainloop()

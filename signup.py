@@ -4,7 +4,7 @@ This module accepts username and password to signup.
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
-from userAccount import open_userAccount
+#from userAccount import open_userAccount
 from adminAccount import open_adminAccount
 signUp = Tk()
 signUp.title("SIGNUP")
@@ -20,7 +20,7 @@ connector = sqlite3.connect("Accounts_details_holder.db")
 cur = connector.cursor()
 """
 # creating a table
-cur.execute('''CREATE TABLE registration_details_holder(
+cur.execute('''CREATE TABLE  IF NOT EXISTS registration_details_holder(
                                                  first_name text,
                                                  last_name text,
                                                  gender text,
@@ -28,8 +28,8 @@ cur.execute('''CREATE TABLE registration_details_holder(
                                                  username text,
                                                  password text)''')
 print("Table has been created successfully.")
-
 """
+
 # ------------------------ different functions for database use begins from here------------------
 
 # Note : 572 x 490 pixel image
@@ -62,32 +62,6 @@ def create_my_account():
     # not allowing to maximize the Registration Form
     register.resizable(0, 0)
     register.configure(bg="#CDC8B1")  # #CDC8B1 = silkcorn color
-    '''
-    create_image = PhotoImage(file="account_create.png")
-    Label(register, image=create_image)
-    #create_image.grid(row=1, column=2)
-
-    img_button = Button(register, image=create_image)
-    img_button.grid(row=1, column=3)'''
-
-    """# ------------------------database use for Registration Form begins from here------------------
-    connector = sqlite3.connect("Accounts_details.db")
-    cur = connector.cursor()
-    
-    # creating a table
-    cur.execute('''CREATE TABLE registration_details(
-                                                     first_name text,
-                                                     last_name text,
-                                                     gender text,
-                                                     contact integer,
-                                                     username text,
-                                                     password text)''')
-    print("Table has been created successfully.")
-
-    # ------------------------ different functions for database use begins from here------------------"""
-
-
-    # ------------------------functions for database use of Registration Form ends from here------------------
 
     # =================================== GUI of Registration Form begins =====================================
     # frame is created to maintain buttons and labels in a systematic arrangement
@@ -99,6 +73,8 @@ def create_my_account():
         This function alerts the user if he/she gives invalid details or leaves entries empty.
         :return: None
         """
+        selected_gender = indicator.get()
+        print(selected_gender)
         # checking whether entered information in 'Contact' entry are digits or not
         for check in contact_entry.get():
             if check.isdigit():
@@ -253,8 +229,7 @@ def create_my_account():
         print(guide.__class__)
         print(guide)
     finally:
-
-        # --------------------------------------------buttons are defined along with events--------------------------------
+        # --------------------------------------------buttons are defined along with events-----------------------
         submit_button = Button(my_frame, text="SUBMIT", highlightbackground="green", command=show_message,
                                font=("Century Gothic", 24, 'bold'))
         submit_button.grid(row=17, column=1, ipadx=18, ipady=3)
@@ -268,21 +243,13 @@ def create_my_account():
         previous_window_btn.grid(row=23, column=1)
 
         # ---------------------------------drop down menu for gender selection--------------------------------------
-        def dropDown():
-            """
-            This function creates drop down menu including Male, Female , Others and Prefer not to say
-            :return: string
-            """
-            gender = ["Male", "Female", "Others", "Prefer not to say"]
-            indicator = StringVar()
-            indicator.set("Male")
-            dropper = OptionMenu(my_frame, indicator, *gender)
-            dropper.grid(row=7, column=1, ipadx=60, ipady=3)
-            dropper.config(bg="#CDC8B1")
-            return indicator.get()
-        selected_gender = dropDown()
-        print(selected_gender)
 
+        gender = ["Male", "Female", "Others", "Prefer not to say"]
+        indicator = StringVar()
+        indicator.set("Choose options")
+        dropper = OptionMenu(my_frame, indicator, *gender)
+        dropper.grid(row=7, column=1, ipadx=60, ipady=3)
+        dropper.config(bg="#CDC8B1")
 
         # --------------------------------------------Entries are defined-----------------------------------
         try:
@@ -373,19 +340,184 @@ def submit():
 
         connetor = sqlite3.connect("Accounts_details_holder.db")
         cur = connetor.cursor()
-        query="Select * from registration_details_holder where username=? and password=?"
+        query = "Select * from registration_details_holder where username=? and password=?"
 
         cur.execute(query,(username_entry.get(), password_entry_signup.get()))
-        rows =cur.fetchall()
+        rows = cur.fetchall()
         # checking whether it is empty or not, if empty shows error message , if no allows to login
         if len(rows) > 0:
-         #   messagebox.showinfo("Account Created", "Login has been successfully done")
-            open_userAccount()
+         messagebox.showinfo("Account Created", "Login has been successfully done")
+
+         # --------------------------------- User account GUI and database are started ------------------------------
+         signUp.withdraw()
+         myAccount = Toplevel()
+         myAccount.title("MY ACCOUNT")
+         myAccount.iconbitmap("see.ico")
+         myAccount.geometry("700x600")
+         myAccount.configure(bg="black")
+         myAccount.resizable(False, False)
+
+         def open_profile_func():
+             """
+             This function continues to next module by hiding this module and  calling another function within it.
+             :return: None
+             """
+             myAccount.withdraw()
+             profile_win = Toplevel()
+             profile_win.title("MY PROFILE")
+             profile_win.iconbitmap("profile.ico")
+             profile_win.geometry("700x600")
+             profile_win.configure(bg="black")
+             profile_win.resizable(1, 1)
+             finding_oid_value = 1
+             # frames are added
+             topFrame = Frame(profile_win, bg="yellow")
+             topFrame.place(x=10, y=10, width=680, height=80)
+             bottomFrame = Frame(profile_win, bg="red")
+             bottomFrame.place(x=10, y=100, width=680, height=490)
+
+             #  ============================================== headline added ================================================
+             heading_img = PhotoImage(file="profile.png")
+             heading = Label(topFrame, text="MY PROFILE", font=("Copperplate", 32, "bold"),
+                             bg="green", fg="yellow", bd=6, relief=RIDGE)
+             heading.pack(side=TOP, fill=X, expand=0)
+             heading.config(image=heading_img, compound=LEFT)
+
+             income = 0
+             spend = 0
+             balance = 0
+
+             # ----------------------- labels are defined -----------------------
+             income_label = Label(bottomFrame, text="Income", font=("courier", 25, "bold"), fg="yellow", bg="green")
+             income_label.grid(row=0, column=0, columnspan=1, padx=50, pady=10)
+
+             spend_label = Label(bottomFrame, text="Expenses", font=("courier", 25, "bold"), fg="yellow",
+                                 bg="green")
+             spend_label.grid(row=0, column=2, columnspan=1, padx=50, pady=10)
+
+             balance_label = Label(bottomFrame, text="Balance", font=("courier", 25, "bold"), fg="yellow",
+                                   bg="green")
+             balance_label.grid(row=0, column=4, columnspan=1, padx=50, pady=10)
+
+             # ------------------------- values of respective labels are given ------------------------
+
+             income_value = Label(bottomFrame, text="$" + str(income), font=("courier", 25, "bold"), fg="black",
+                                  bg="red")
+             income_value.grid(row=1, column=0, columnspan=1, padx=50, pady=10)
+
+             spend_value = Label(bottomFrame, text="$" + str(spend), font=("courier", 25, "bold"), fg="black",
+                                 bg="red")
+             spend_value.grid(row=1, column=2, columnspan=1, padx=50, pady=10)
+
+             balance_value = Label(bottomFrame, text="$" + str(balance), font=("courier", 25, "bold"), fg="black",
+                                   bg="red")
+             balance_value.grid(row=1, column=4, columnspan=1, padx=50, pady=10)
+
+             # ------------------------------------ Basic details of the user-------------------------------------
+             connect_me = sqlite3.connect("Accounts_details_holder.db")
+             cur = connect_me.cursor()
+             cur.execute("SELECT password,first_name, last_name, gender, contact, oid FROM registration_details_holder")
+             fetch_data = cur.fetchall()
+             print(fetch_data)
+             # Searching details of the particular user and matching his/her password
+             # from the database to fetch his/her other details for showing details on the screen
+
+             for password_search, first_name_search, last_name_search, gender_search, contact_search,oid_search in fetch_data:  # [(username, oid), (username, oid), ..]
+                 print(password_search, oid_search)  # (username, oid)
+
+                 if password_search == password_entry_signup.get():
+                     first_name_found = first_name_search
+                     last_name_found = last_name_search
+                     gender_found = gender_search
+                     contact_found = contact_search
+                     oid_found = oid_search
+                     print(first_name_found, last_name_found, gender_found, contact_found, oid_found)
+                     break
+
+
+             # ---------------------Now, details are shoving on the screen------------------
+
+             full_name_show = first_name_found +" "+ last_name_found
+             gender_show = gender_found
+             contact_show = contact_found
+             username_show = username_entry.get()
+             oid_show = oid_found
+
+             user_fullName = Label(bottomFrame, text=f"Name : {full_name_show}", font=("courier", 25, "bold"), fg="black",
+                                   bg="red")
+             user_fullName.grid(row=2, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+             user_gender = Label(bottomFrame, text=f"Gender : {gender_show}", font=("courier", 25, "bold"),
+                                   fg="black", bg="red")
+             user_gender.grid(row=3, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+             user_contact = Label(bottomFrame, text=f"Contact : {contact_show}", font=("courier", 25, "bold"),
+                                   fg="black", bg="red")
+             user_contact.grid(row=4, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+             user_username = Label(bottomFrame, text=f"Username : {username_show}", font=("courier", 25, "bold"),
+                                   fg="black", bg="red")
+             user_username.grid(row=5, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+             user_oid = Label(bottomFrame, text=f"Oid number : {oid_show}", font=("courier", 25, "bold"),
+                                   fg="black", bg="red")
+             user_oid.grid(row=6, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+             profile_win.mainloop()
+
+         def open_income_func():
+             """
+             This function continues to next module by hiding this module and  calling another function within it.
+             :return: None
+             """
+             myAccount.withdraw()
+
+         def open_setting_func():
+             """
+             This function continues to next module by hiding this module and  calling another function within it.
+             :return: None
+             """
+             myAccount.withdraw()
+
+         #  ============================================== headline added ================================================
+         heading_img = PhotoImage(file="incomeAndExpenditure.png")
+         heading = Label(myAccount, text="INCOME AND EXPENSES ANALYZER", font=("Copperplate", 32, "bold"),
+                         bg="silver", bd=6, relief=RIDGE)
+         heading.pack(side=TOP, fill=X, expand=0)
+         heading.config(image=heading_img, compound=LEFT)
+
+         # ============================================== different frames are added ===============================
+         center_frame = Frame(myAccount, bg="#7C7474", bd=6, relief=SOLID)
+         center_frame.place(x=180, y=70, width=330, height=500)
+
+         # =================================== Buttons with events are defined in left_frame  ============================
+
+         myProfile_button = Button(center_frame, text="My Profile", font=("Times New Roman", 24, "bold"),
+                                   command=open_profile_func,
+                                   highlightbackground="green")
+         myProfile_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+         income_button = Button(center_frame, text="My Income", font=("Times New Roman", 24, "bold"),
+                                command=open_income_func,
+                                highlightbackground="green", fg="black")
+         income_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+         setting_button = Button(center_frame, text="My Setting", font=("Times New Roman", 24, "bold"),
+                                 command=open_setting_func,
+                                 highlightbackground="green")
+         setting_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+         logout_button = Button(center_frame, text="Log Out", font=("Times New Roman", 24, "bold"),
+                                highlightbackground="green")
+         logout_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+         myAccount.mainloop()
+
         else:
             messagebox.showerror("Error", "Invalid username and password.")
 
 
-# for creating empty rows for a systematic management of entries for a better look
+# for creating empty rows for a systematic management of entriews for a better look
 def empty():
     """
     This creates empty spaces.
