@@ -4,8 +4,11 @@ This module accepts username and password to signup.
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
-#from userAccount import open_userAccount
+from tkinter import ttk
 from adminAccount import open_adminAccount
+# using third party library , for installation ===> pip install tkcalendar
+from tkcalendar import *
+
 signUp = Tk()
 signUp.title("SIGNUP")
 # resolution of the window changes
@@ -310,6 +313,8 @@ def create_my_account():
 row_num = 0
 # for storing data of a user from profile page
 fetched_income = "0"
+fetched_expenses = 0
+fetched_balance = 0
 income = 0
 spend = 0
 balance = 0
@@ -321,7 +326,7 @@ def exit_signup():
     """
     response = messagebox.askyesno("Quit", "Do you want to quit ?")
     if response == 1:
-        signUp.quit()
+        signUp.destroy()
 
 # function for submitting details as clicked on "LOGIN" button.
 def submit():
@@ -338,7 +343,93 @@ def submit():
         messagebox.showerror("Error", "Please, fill password box.")
     elif username_entry.get() == "admin" and password_entry_signup.get() == "admin":
         signUp.withdraw()
-        open_adminAccount()
+
+        # ------------------GUI for AdminAccount starts from here-----------------------
+        adminAccount = Toplevel()
+        adminAccount.title("Admin")
+        adminAccount.geometry("1400x800")
+
+        heading_title = Label(adminAccount, text="Registered account details", font=("Copperplate", 19, "bold"), padx=3,
+                              bd=3,
+                              pady=4, bg="red", fg="black")
+        heading_title.pack(fill=X)
+        # ----------------------------- frames are added ------------------------------
+        frame1 = Frame(adminAccount)
+        frame1.pack()
+        frame2 = Frame(adminAccount, height=250, width=400, bg="white")
+        frame2.pack()
+
+        def open_logout():
+            """
+            This function asks to quit or not
+            :return: None
+            """
+            user_respond_for_quit = messagebox.askyesnocancel("Log out", "Do you want to log out ?")
+            if user_respond_for_quit == 1:
+                username_entry.delete(0, END)
+                password_entry_signup.delete(0, END)
+                signUp.deiconify()
+                adminAccount.destroy()
+
+        def delete_account():
+            """
+            This function deletes account of the users by accepting oid number.
+            :return: None
+            """
+            connector = sqlite3.connect("Accounts_details_holder.db")
+            cur = connector.cursor()
+            cur.execute("DELETE from registration_details_holder WHERE oid=" + id_entry.get())
+            print("Account has been deleted successfully.")
+            messagebox.showinfo("Deletion",
+                                "An account has been deleted successfully. Please, log out and resign in to view changes.")
+            id_entry.delete(0, END)
+            connector.commit()
+            connector.close()
+
+        # ------------------------------------- DATABASE -----------------------------
+        connector = sqlite3.connect("Accounts_details_holder.db")
+        cur = connector.cursor()
+        # showing all recorded information of the users.
+        cur.execute("SELECT *, oid FROM registration_details_holder")
+        # retrieving all stored information
+        all_records = cur.fetchall()
+        # print(all_records)
+
+        headings_list = ["First Name", "Last Name", "Gender", "Contact", "Username", "Password", "Oid"]
+        # using Treeview to show information in a proper manner.
+        table = ttk.Treeview(frame1, columns=headings_list, show='headings')
+        for arrange in headings_list:
+            table.heading(arrange, text=arrange)
+        table.pack(side=LEFT)
+        for serial_num, (firstName, lastName, gender, contact, userName, password, oid_num) in enumerate(all_records,
+                                                                                                         start=1):
+            table.insert("", "end", values=(firstName, lastName, gender, contact, userName, password, oid_num))
+
+        # =============================== Entries are added ======================================
+
+        id_entry = Entry(frame2, bd=3, width=30)
+        id_entry.grid(row=0, column=1, padx=20, pady=15)
+
+        # ----------------- for deleting any suspicious account that violates any policies  ----------------------------
+        id_label = Label(frame2, text="ID", font=("Times new roman", 25, "bold"))
+        id_label.grid(row=0, column=0)
+
+        # button with event is added
+        delete_button = Button(frame2, text="Delete", highlightbackground="green", font=("Cambria", 25, "bold"),
+                               command=delete_account, fg="blue")
+        delete_button.grid(row=1, column=0, padx=10, pady=15, columnspan=4, ipadx=9, ipady=8)
+
+        # for log out
+        logout_button = Button(frame2, text="Log out", highlightbackground="green", font=("Cambria", 25, "bold"),
+                               command=open_logout, fg="blue")
+        logout_button.grid(row=2, column=0, padx=10, pady=15, columnspan=4, ipadx=9, ipady=8)
+        """
+        # --------------------------- Scroll bar is added --------------------------
+        scrollbar_y = Scrollbar(frame1, orient=VERTICAL, command=table.yview)
+        scrollbar_y.pack(side=RIGHT, fill=Y)
+        """
+        adminAccount.mainloop()
+
 
     else:
 
@@ -350,444 +441,857 @@ def submit():
         rows = cur.fetchall()
         # checking whether it is empty or not, if empty shows error message , if no allows to login
         if len(rows) > 0:
-         messagebox.showinfo("Account Created", "Login has been successfully done")
+             messagebox.showinfo("Account Created", "Login has been successfully done")
 
-         # --------------------------------- User account GUI and database are started ------------------------------
-         signUp.withdraw()
-         myAccount = Toplevel()
-         myAccount.title("MY ACCOUNT")
-         myAccount.iconbitmap("see.ico")
-         myAccount.geometry("700x600")
-         myAccount.configure(bg="black")
-         myAccount.resizable(False, False)
+             # --------------------------------- User account GUI and database are started ------------------------------
+             signUp.withdraw()
+             myAccount = Toplevel()
+             myAccount.title("MY ACCOUNT")
+             myAccount.iconbitmap("see.ico")
+             myAccount.geometry("700x600")
+             myAccount.configure(bg="black")
+             myAccount.resizable(False, False)
 
+             # To create 3 different files of the user so, a+ mode is used.
+             with open(str(password_entry_signup.get() + "_income.txt"), "a+") as f:
+                 pass
 
+             with open(str(password_entry_signup.get() + "_expenses.txt"), "a+") as file:
+                 pass
 
-         def open_profile_func():
-             """
-             This function continues to next module by hiding this module and  calling another function within it.
-             :return: None
-             """
-             myAccount.withdraw()
-             profile_win = Toplevel()
-             profile_win.title("MY PROFILE")
-             profile_win.iconbitmap("profile.ico")
-             profile_win.geometry("700x600")
-             profile_win.configure(bg="black")
-             profile_win.resizable(0, 0)
+             with open(str(password_entry_signup.get() + "_balance.txt"), "a+") as file:
+                 pass
 
-             # ----------------------------  frames are added ------------------
-
-             topFrame = Frame(profile_win, bg="yellow")
-             topFrame.place(x=10, y=10, width=680, height=80)
-             bottomFrame = Frame(profile_win, bg="red")
-             bottomFrame.place(x=10, y=100, width=680, height=490)
-             def back_func():
+             def open_profile_func():
                  """
-                 This function returns to the previous page i.e My account by exiting current page.
+                 This function continues to next module by hiding this module and  calling another function within it.
                  :return: None
                  """
-                 myAccount.deiconify()
-                 profile_win.destroy()
+                 myAccount.withdraw()
+                 profile_win = Toplevel()
+                 profile_win.title("MY PROFILE")
+                 profile_win.iconbitmap("profile.ico")
+                 profile_win.geometry("700x600")
+                 profile_win.configure(bg="black")
+                 profile_win.resizable(0, 0)
 
-             #  ================================= headline added ======================================
+                 # ----------------------------  frames are added ------------------
 
-             heading_img = PhotoImage(file="profile.png")
-             heading = Label(topFrame, text="MY PROFILE", font=("Copperplate", 32, "bold"),
-                             bg="green", fg="yellow", bd=6, relief=RIDGE)
-             heading.pack(side=TOP, fill=X, expand=0)
-             heading.config(image=heading_img, compound=LEFT)
+                 topFrame = Frame(profile_win, bg="yellow")
+                 topFrame.place(x=10, y=10, width=680, height=80)
+                 bottomFrame = Frame(profile_win, bg="white")
+                 bottomFrame.place(x=10, y=100, width=680, height=490)
+                 def back_func():
+                     """
+                     This function returns to the previous page i.e My account by exiting current page.
+                     :return: None
+                     """
+                     myAccount.deiconify()
+                     profile_win.destroy()
 
+                 #  ================================= headline added ======================================
 
-             # files are created to save vaules of income , spend and balance
-
-             with open(str(password_entry_signup.get()+"_income.txt"), "r+") as income_file:
-
-                 income_file.seek(0)
-                 stored_income_value = income_file.read()
-                 print("Income from reading txt : ", stored_income_value)
-
-             global fetched_income
-
-             fetched_income += stored_income_value
-             print("Your income after reading txt file is : ", fetched_income)
-
-             with open(str(password_entry_signup.get()+"_expenses.txt"), "w+") as income_file:
+                 heading_img = PhotoImage(file="profile.png")
+                 heading = Label(topFrame, text="MY PROFILE", font=("Copperplate", 32, "bold"),
+                                 bg="green", fg="yellow", bd=6, relief=RIDGE)
+                 heading.pack(side=TOP, fill=X, expand=0)
+                 heading.config(image=heading_img, compound=LEFT)
 
 
-                 stored_value = income_file.read()
-                 print("Expenses : ", stored_value)
+                 # files are created to save vaules of income , spend and balance
 
-             with open(str(password_entry_signup.get()+"_balance.txt"), "r+") as income_file:
+                 with open(str(password_entry_signup.get()+"_income.txt"), "r+") as income_file:
+                     income_file.seek(0)
+                     stored_income_value = income_file.read()
+                     #print("Income from reading txt : ", stored_income_value)
 
-                 income_file.seek(0)
-                 stored_value = income_file.read()
-                 print("Balance : ", stored_value)
+                 global fetched_income
 
-             # ----------------------- labels are defined -----------------------
-             income_label = Label(bottomFrame, text="Income", font=("courier", 25, "bold"), fg="yellow", bg="green")
-             income_label.grid(row=0, column=0, columnspan=1, padx=50, pady=10)
+                 fetched_income = stored_income_value
+                 #print("Your income after reading txt file is : ", fetched_income)
 
-             spend_label = Label(bottomFrame, text="Expenses", font=("courier", 25, "bold"), fg="yellow",
-                                 bg="green")
-             spend_label.grid(row=0, column=2, columnspan=1, padx=50, pady=10)
+                 with open(str(password_entry_signup.get()+"_expenses.txt"), "r+") as expenses_file:
+                     stored_expenses_value = expenses_file.read()
+                     #print("Expenses from reading txt : ", stored_expenses_value)
+                 global fetched_expenses
+                 fetched_expenses = stored_expenses_value
 
-             balance_label = Label(bottomFrame, text="Balance", font=("courier", 25, "bold"), fg="yellow",
-                                   bg="green")
-             balance_label.grid(row=0, column=4, columnspan=1, padx=50, pady=10)
+                 with open(str(password_entry_signup.get()+"_balance.txt"), "r+") as balance_file:
+                     stored_balance_value = balance_file.read()
+                     #print("Balance from reading txt  : ", stored_balance_value)
 
-             # ------------------------- values of respective labels are given ------------------------
+                 global fetched_balance
+                 fetched_balance = stored_balance_value
 
-             income_value = Label(bottomFrame, text="$" + str(fetched_income), font=("courier", 25, "bold"), fg="black",
-                                  bg="red")
-             income_value.grid(row=1, column=0, columnspan=1, padx=50, pady=10)
+                 # ----------------------- labels are defined -----------------------
+                 income_label = Label(bottomFrame, text="Income", font=("courier", 25, "bold"), fg="yellow", bg="green")
+                 income_label.grid(row=0, column=0, columnspan=1, padx=50, pady=10)
 
-             spend_value = Label(bottomFrame, text="$" + str(spend), font=("courier", 25, "bold"), fg="black",
-                                 bg="red")
-             spend_value.grid(row=1, column=2, columnspan=1, padx=50, pady=10)
+                 spend_label = Label(bottomFrame, text="Expenses", font=("courier", 25, "bold"), fg="yellow",
+                                     bg="green")
+                 spend_label.grid(row=0, column=2, columnspan=1, padx=50, pady=10)
 
-             balance_value = Label(bottomFrame, text="$" + str(balance), font=("courier", 25, "bold"), fg="black",
-                                   bg="red")
-             balance_value.grid(row=1, column=4, columnspan=1, padx=50, pady=10)
+                 balance_label = Label(bottomFrame, text="Balance", font=("courier", 25, "bold"), fg="yellow",
+                                       bg="green")
+                 balance_label.grid(row=0, column=4, columnspan=1, padx=50, pady=10)
 
-             # ------------------------------------ Basic details of the user-------------------------------------
-             connect_me = sqlite3.connect("Accounts_details_holder.db")
-             cur = connect_me.cursor()
-             cur.execute("SELECT password,first_name, last_name, gender, contact, oid FROM registration_details_holder")
-             fetch_data = cur.fetchall()
-             #print(fetch_data)
-             # Searching details of the particular user and matching his/her password
-             # from the database to fetch his/her other details for showing details on the screen
+                 # ------------------------- values of respective labels are given ------------------------
 
-             for password_search, first_name_search, last_name_search, gender_search, contact_search,oid_search in fetch_data:  # [(username, oid), (username, oid), ..]
-                 #print(password_search, oid_search)  # (username, oid)
+                 income_value = Label(bottomFrame, text="$" + str(fetched_income), font=("courier", 25, "bold"), fg="black",
+                                      bg="white")
+                 income_value.grid(row=1, column=0, columnspan=1, padx=50, pady=10)
 
-                 if password_search == password_entry_signup.get():
-                     first_name_found = first_name_search
-                     last_name_found = last_name_search
-                     gender_found = gender_search
-                     contact_found = contact_search
-                     oid_found = oid_search
-                     #print(first_name_found, last_name_found, gender_found, contact_found, oid_found)
-                     break
+                 spend_value = Label(bottomFrame, text="$" + str(fetched_expenses), font=("courier", 25, "bold"), fg="black",
+                                     bg="white")
+                 spend_value.grid(row=1, column=2, columnspan=1, padx=50, pady=10)
 
-             connect_me.commit()
-             connect_me.close()
+                 balance_value = Label(bottomFrame, text="$" + str(fetched_balance), font=("courier", 25, "bold"), fg="black",
+                                       bg="white")
+                 balance_value.grid(row=1, column=4, columnspan=1, padx=50, pady=10)
 
-             # ---------------------Now, details are shoving on the screen------------------
-             global full_name_show, gender_show, contact_show, username_show, oid_show
+                 # ------------------------------------ Basic details of the user-------------------------------------
+                 connect_me = sqlite3.connect("Accounts_details_holder.db")
+                 cur = connect_me.cursor()
+                 cur.execute("SELECT username, password,first_name, last_name, gender, contact, oid FROM registration_details_holder")
+                 fetch_data = cur.fetchall()
+                 #print(fetch_data)
+                 # Searching details of the particular user and matching his/her password
+                 # from the database to fetch his/her other details for showing details on the screen
 
-             full_name_show = first_name_found +" "+ last_name_found
-             gender_show = gender_found
-             contact_show = contact_found
-             username_show = username_entry.get()
-             oid_show = oid_found
+                 for username_search, password_search, first_name_search, last_name_search, gender_search, contact_search,oid_search in fetch_data:  # [(username, oid), (username, oid), ..]
+                     #print(username_search, password_search, oid_search)  # (username, oid)
 
-             user_fullName = Label(bottomFrame, text=f"Name : {full_name_show}", font=("courier", 25, "bold"), fg="black",
-                                   bg="red")
-             user_fullName.grid(row=2, column=0, columnspan=3, padx=50, pady=10, sticky=W)
-
-             user_gender = Label(bottomFrame, text=f"Gender : {gender_show}", font=("courier", 25, "bold"),
-                                   fg="black", bg="red")
-             user_gender.grid(row=3, column=0, columnspan=3, padx=50, pady=10, sticky=W)
-
-             user_contact = Label(bottomFrame, text=f"Contact : {contact_show}", font=("courier", 25, "bold"),
-                                   fg="black", bg="red")
-             user_contact.grid(row=4, column=0, columnspan=3, padx=50, pady=10, sticky=W)
-
-             user_username = Label(bottomFrame, text=f"Username : {username_show}", font=("courier", 25, "bold"),
-                                   fg="black", bg="red")
-             user_username.grid(row=5, column=0, columnspan=3, padx=50, pady=10, sticky=W)
-
-             user_oid = Label(bottomFrame, text=f"Oid number : {oid_show}", font=("courier", 25, "bold"),
-                                   fg="black", bg="red")
-             user_oid.grid(row=6, column=0, columnspan=3, padx=50, pady=10, sticky=W)
-
-             # button with event
-             back_button = Button(bottomFrame, text="BACK", font=("times new roman", 25, "bold"),
-                                  command=back_func, highlightbackground="white", fg="black")
-             back_button.grid(row=7, column=1, columnspan=3, padx=50, pady=10)
-
-             profile_win.mainloop()
-
-         def open_income_func():
-             """
-             This function continues to next module by hiding this module and  calling another function within it.
-             :return: None
-             """
-             myAccount.withdraw()
-             #  ----------------------- GUI for income is started ---------------------
-             income_win = Toplevel()
-             income_win.title("MY INCOME")
-             income_win.iconbitmap("income.ico")
-             income_win.geometry("700x700")
-             income_win.configure(bg="black")
-             income_win.resizable(0, 0)
-
-             def adding_budget():
-                 """
-                 This function checks whether provided values are digit (numeric data type except complex) or not.
-                 IF not, shows error message.
-                 IF they are digit , then only function allows to add all provided values and save in txt file.
-                 :return: float
-                 """
-                 # Now, checking  whether provided each word or letter of each entry is digit or not.
-                 # all entries are kept in list data structure to traverse each letter and entry, where outer loop
-                 # traverses each entry and inner loop traverses each word and checks it is digit or not.
-
-                 entries_fields = [salary_entry.get(), poultry_farming_entry.get(),
-                                   animal_husbandy_entry.get(), vegetable_farming_entry.get(),
-                                   shops_entry.get(), house_rent_entry.get(), others_entry.get()]
-                 stoping_outer_loop = 0
-                 for checking_each_entry in entries_fields:
-                     if stoping_outer_loop == 1:
+                     if username_search == username_entry.get() and password_search == password_entry_signup.get():
+                         first_name_found = first_name_search
+                         last_name_found = last_name_search
+                         gender_found = gender_search
+                         contact_found = contact_search
+                         oid_found = oid_search
+                         print(first_name_found, last_name_found, gender_found, contact_found, oid_found)
                          break
-                     for checking_each_letter in checking_each_entry:
-                         if checking_each_letter.isdigit():
-                             inserted_in_numbers = True
+
+                 connect_me.commit()
+                 connect_me.close()
+
+                 # ---------------------Now, details are shoving on the screen------------------
+                 global full_name_show, gender_show, contact_show, username_show, oid_show
+
+                 full_name_show = first_name_found +" "+ last_name_found
+                 gender_show = gender_found
+                 contact_show = contact_found
+                 username_show = username_entry.get()
+                 oid_show = oid_found
+
+                 user_fullName = Label(bottomFrame, text=f"Name : {full_name_show}", font=("courier", 25, "bold"), fg="black",
+                                       bg="white")
+                 user_fullName.grid(row=2, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+                 user_gender = Label(bottomFrame, text=f"Gender : {gender_show}", font=("courier", 25, "bold"),
+                                       fg="black", bg="white")
+                 user_gender.grid(row=3, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+                 user_contact = Label(bottomFrame, text=f"Contact : {contact_show}", font=("courier", 25, "bold"),
+                                       fg="black", bg="white")
+                 user_contact.grid(row=4, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+                 user_username = Label(bottomFrame, text=f"Username : {username_show}", font=("courier", 25, "bold"),
+                                       fg="black", bg="white")
+                 user_username.grid(row=5, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+                 user_oid = Label(bottomFrame, text=f"Oid number : {oid_show}", font=("courier", 25, "bold"),
+                                       fg="black", bg="white")
+                 user_oid.grid(row=6, column=0, columnspan=3, padx=50, pady=10, sticky=W)
+
+                 # button with event
+                 back_button = Button(bottomFrame, text="BACK", font=("times new roman", 25, "bold"),
+                                      command=back_func, highlightbackground="white", fg="black")
+                 back_button.grid(row=7, column=1, columnspan=3, padx=50, pady=10)
+
+                 profile_win.mainloop()
+
+             def open_income_func():
+                 """
+                 This function continues to next module by hiding this module and  calling another function within it.
+                 :return: None
+                 """
+                 myAccount.withdraw()
+                 #  ----------------------- GUI for income is started ---------------------
+                 income_win = Toplevel()
+                 income_win.title("MY INCOME")
+                 income_win.iconbitmap("income.ico")
+                 income_win.geometry("700x700")
+                 income_win.configure(bg="black")
+                 income_win.resizable(0, 0)
+
+                 def adding_budget():
+                     """
+                     This function checks whether provided values are digit (numeric data type except complex) or not.
+                     IF not, shows error message.
+                     IF they are digit , then only function allows to add all provided values and save in txt file.
+                     :return: float
+                     """
+                     # Now, checking  whether provided each word or letter of each entry is digit or not.
+                     # all entries are kept in list data structure to traverse each letter and entry, where outer loop
+                     # traverses each entry and inner loop traverses each word and checks it is digit or not.
+
+                     entries_fields = [salary_entry.get(), poultry_farming_entry.get(),
+                                       animal_husbandy_entry.get(), vegetable_farming_entry.get(),
+                                       shops_entry.get(), house_rent_entry.get(), others_entry.get()]
+                     stoping_outer_loop = 0
+                     for checking_each_entry in entries_fields:
+                         if stoping_outer_loop == 1:
+                             break
+                         for checking_each_letter in checking_each_entry:
+                             if checking_each_letter.isdigit():
+                                 inserted_in_numbers = True
+                             else:
+                                 inserted_in_numbers = False
+                                 stoping_outer_loop += 1
+                                 break
+
+                     if salary_entry.get() == "" and poultry_farming_entry.get() == "" and\
+                             vegetable_farming_entry.get() == "" and house_rent_entry.get() == "" and \
+                             animal_husbandy_entry.get() == "" and shops_entry.get() == "" and others_entry.get() == "":
+
+                         messagebox.showerror("Empty", "All boxes are empty.")
+
+                     # now, allowing digits only
+                     elif inserted_in_numbers is False:
+                         messagebox.showerror("Invalid", "Please, insert budget in numbers only.")
+
+                     elif salary_entry.get() == "":
+                         messagebox.showerror("Empty", "Salary box is empty. Please, insert it.")
+
+                     elif poultry_farming_entry.get() == "":
+                         messagebox.showerror("Empty", "Poultry Farming box is empty. Please, insert it.")
+
+                     elif animal_husbandy_entry.get() == "":
+                         messagebox.showerror("Empty", "Animal husbandry box is empty. Please, insert it.")
+
+                     elif house_rent_entry.get() == "":
+                         messagebox.showerror("Empty", "House rent box is empty. Please, insert it.")
+
+                     elif others_entry.get() == "":
+                         messagebox.showerror("Empty", "Others box is empty. Please, insert it.")
+
+                     elif vegetable_farming_entry.get() == "":
+                         messagebox.showerror("Empty", "Vegetable Farming box is empty. Please, insert it.")
+
+                     elif shops_entry.get() == "":
+                         messagebox.showerror("Empty", "Shop box is empty. Please, insert it.")
+
+                     else:
+                         total_income = float(salary_entry.get()) + float(poultry_farming_entry.get()) + \
+                                        float(animal_husbandy_entry.get()) + float(vegetable_farming_entry.get()) + \
+                                        float(shops_entry.get()) + float(others_entry.get()) + float(house_rent_entry.get())
+
+                         print("Total income is : ", total_income)
+
+                         # clearing the entry fields after inserting info
+                         salary_entry.delete(0, END)
+                         poultry_farming_entry.delete(0, END)
+                         vegetable_farming_entry.delete(0, END)
+                         house_rent_entry.delete(0, END)
+                         animal_husbandy_entry.delete(0, END)
+                         shops_entry.delete(0, END)
+                         others_entry.delete(0, END)
+
+
+                         global income
+                         global fetched_income
+                         #income += total_income
+                         income = total_income
+                         fetched_income = ""
+
+                         # overwriting the value of income by new value in created file
+                         with open(str(password_entry_signup.get()+"_income.txt"), "w+") as income_file:
+                             income_file.write(str(income))
+
+                         # maintaining balance after adding budget
+                         global balance
+                         balance += income
+                         with open(str(password_entry_signup.get() + "_balance.txt"), "r+") as balance_file:
+                             balance_file.write(str(balance))
+
+                         messagebox.showinfo("Total Budget", "Your total budget is $" + str(total_income) +
+                                             " and total income is $" + str(income) + " Thank You!")
+
+
+
+                 def go_back():
+                     """
+                     This function returns the previous page.
+                     :return: None
+                     """
+
+                     myAccount.deiconify()
+                     income_win.destroy()
+                 # ----------------------------  frames are added ------------------
+
+                 topFrame2 = Frame(income_win, bg="yellow")
+                 topFrame2.place(x=10, y=10, width=680, height=80)
+                 bottomFrame2 = Frame(income_win, bg="white")
+                 bottomFrame2.place(x=10, y=100, width=680, height=590)
+
+                 #  ================================= headline added ======================================
+                 heading_img = PhotoImage(file="income.png")
+                 heading = Label(topFrame2, text="MY INCOME", font=("Copperplate", 32, "bold"),
+                                 bg="green", fg="yellow", bd=6, relief=RIDGE)
+                 heading.pack(side=TOP, fill=X, expand=0)
+                 heading.config(image=heading_img, compound=LEFT)
+
+                 # ----------------------------- labels are added -------------------------------
+                 instruction = "Please, insert your budget (only in numbers) from the following sectors :"
+
+                 instruction_label = Label(bottomFrame2, text=instruction, font=("times new roman", 22, "italic"),
+                                      fg="black", bg="white")
+                 instruction_label.grid(row=0, column=0, columnspan=2, padx=2, pady=10, sticky=W)
+
+                 salary_label = Label(bottomFrame2, text="Salary :", font=("times new roman", 20, "bold"),
+                                       fg="black", bg="white")
+                 salary_label.grid(row=1, column=0, padx=2, pady=10, sticky=W)
+
+                 poultry_farming_label = Label(bottomFrame2, text="Poultry Farming :", font=("times new roman", 20, "bold"),
+                                     fg="black", bg="white")
+
+                 poultry_farming_label.grid(row=2, column=0, padx=2, pady=10, sticky=W)
+
+                 vegetable_farming_label = Label(bottomFrame2, text="Vegetable Farming :", font=("times new roman", 20, "bold"),
+                                      fg="black", bg="white")
+                 vegetable_farming_label.grid(row=3, column=0, padx=2, pady=10, sticky=W)
+
+                 house_rent_label = Label(bottomFrame2, text="House Rent :", font=("times new roman", 20, "bold"),
+                                               fg="black", bg="white")
+
+                 house_rent_label.grid(row=4, column=0, padx=2, pady=10, sticky=W)
+
+                 animal_husbandy_label = Label(bottomFrame2, text="Animal Husbandry :", font=("times new roman", 20, "bold"),
+                                               fg="black", bg="white")
+
+                 animal_husbandy_label.grid(row=5, column=0, padx=2, pady=10, sticky=W)
+
+                 shops_label = Label(bottomFrame2, text="Shops :",
+                                                 font=("times new roman", 20, "bold"),
+                                                 fg="black", bg="white")
+                 shops_label.grid(row=6, column=0, padx=2, pady=10, sticky=W)
+
+                 others_label = Label(bottomFrame2, text="Others :", font=("times new roman", 20, "bold"),
+                                          fg="black", bg="white")
+
+                 others_label.grid(row=7, column=0, padx=2, pady=10, sticky=W)
+
+                 # -------------------------- entries are added ------------------------------
+
+                 salary_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
+                                      fg="black", bg="white")
+                 salary_entry.grid(row=1, column=1, padx=2, pady=10, sticky=W)
+
+                 poultry_farming_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
+                                     fg="black", bg="white")
+                 poultry_farming_entry.grid(row=2, column=1, padx=2, pady=10, sticky=W)
+
+                 vegetable_farming_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
+                                      fg="black", bg="white")
+                 vegetable_farming_entry.grid(row=3, column=1, padx=2, pady=10, sticky=W)
+
+                 house_rent_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
+                                               fg="black", bg="white")
+                 house_rent_entry.grid(row=4, column=1, padx=2, pady=10, sticky=W)
+
+                 animal_husbandy_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
+                                               fg="black", bg="white")
+                 animal_husbandy_entry.grid(row=5, column=1, padx=2, pady=10, sticky=W)
+
+                 shops_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
+                                                 fg="black", bg="white")
+                 shops_entry.grid(row=6, column=1, padx=2, pady=10, sticky=W)
+
+                 others_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
+                                          fg="black", bg="white")
+                 others_entry.grid(row=7, column=1, padx=2, pady=10, sticky=W)
+
+                 # ------------------ button with event is defined -----------------
+
+                 add_button = Button(bottomFrame2, text="Add budget", font=("times new roman", 24, "bold"),
+                                     command=adding_budget, fg="black", highlightbackground="green")
+                 add_button.grid(row=8, column=1, padx=65, pady=10, ipadx=2, ipady=2, sticky=W)
+
+                 back_btn = Button(bottomFrame2, text="BACK", font=("times new roman", 24, "bold"), command=go_back,
+                                     fg="black", highlightbackground="green")
+                 back_btn.grid(row=9, column=1, padx=90, pady=10, ipadx=2, ipady=2, sticky=W)
+
+                 income_win.mainloop()
+
+             def open_expenses_func():
+                 """
+                 This function continues to next module by hiding this module and  calling another function within it.
+                 :return: None
+                 """
+                 myAccount.withdraw()
+                 #  ----------------------- GUI for expenses is started ---------------------
+                 expenses_win = Toplevel()
+                 expenses_win.title("MY EXPENSES")
+                 expenses_win.iconbitmap("expenses.ico")
+                 expenses_win.geometry("700x700")
+                 expenses_win.configure(bg="black")
+                 expenses_win.resizable(0, 0)
+
+                 def go_previous():
+                     """
+                     This function returns the previous page.
+                     :return: None
+                     """
+
+                     myAccount.deiconify()
+                     expenses_win.destroy()
+                 def save_expenses():
+                     """
+                     This function saves expenditure of the user as float.
+                     :return: None
+                     """
+                     # checking whether entered information in 'Contact' entry are digits or not
+                     for checker in price_entry.get():
+                         if checker.isdigit():
+                             inserted_price = True
                          else:
-                             inserted_in_numbers = False
-                             stoping_outer_loop += 1
+                             inserted_price = False
+                             break
+                     if price_entry.get() == "":
+                         messagebox.showerror("Empty", "Price box is empty. Please , fill it.")
+
+                     elif inserted_price is False:
+                         messagebox.showerror("Invalid", "Please , insert digits only in it.")
+
+                     else:
+                         global spend
+                         spend += float(price_entry.get())
+
+                         with open(str(password_entry_signup.get()+"_expenses.txt"), "w+") as expenses_file:
+                             expenses_file.write(str(spend))
+
+                         price_entry.delete(0, END)
+                         messagebox.showinfo("Expenses", "Your expenditure is " + str(spend)+ " Thank you !")
+
+                         # maintaining balance after adding expenses budget so, subtracting now
+                         global balance
+                         balance -= spend
+                         with open(str(password_entry_signup.get() + "_balance.txt"), "r+") as balance_file:
+                             balance_file.write(str(balance))
+
+                 # ----------------------------  frames are added ------------------
+
+                 topFrame3 = Frame(expenses_win, bg="yellow")
+                 topFrame3.place(x=10, y=10, width=680, height=80)
+                 bottomFrame3 = Frame(expenses_win, bg="white")
+                 bottomFrame3.place(x=10, y=100, width=680, height=220)
+                 bottomFrame3_another = Frame(expenses_win, bg="white")
+                 bottomFrame3_another.place(x=10, y=320, width=680, height=365)
+
+                 #  ================================= headline added ======================================
+                 heading_img = PhotoImage(file="expenses.png")
+                 heading = Label(topFrame3, text="MY EXPENSES", font=("Copperplate", 32, "bold"),
+                                 bg="green", fg="yellow", bd=6, relief=RIDGE)
+                 heading.pack(side=TOP, fill=X, expand=0)
+                 heading.config(image=heading_img, compound=LEFT)
+
+
+                 # --------------------------label in bottomFrame3 is defined --------------------------------
+                 category_items = "Please, choose the only one category at a time :"
+                 category_label = Label(bottomFrame3, text=category_items, font=("times new roman", 24, "italic"),
+                                           fg="black", bg="white")
+                 category_label.pack(padx=2, pady=10, anchor=W)
+
+                 # --------------- for radiobuttons, category is written twice as text and value respectively------------
+                 categories_options = [("Education", "Education"), ("Shopping", "Shopping"),
+                                       ("Transportation", "Transportation"), ("Foods", "Foods"),
+                                       ("Clothing", "Clothing"), ("Entertainment", "Entertainment")]
+
+                 chosen_option = StringVar()
+                 chosen_option.set("Education")
+
+                 for options, opt_value in categories_options:
+                     make_radiobutton = Radiobutton(bottomFrame3, text=options, variable=chosen_option, value=opt_value)
+                     make_radiobutton.pack(padx=2, pady=2, anchor=W)
+
+                 # ------------------ labels are defined in bottomFrame3_another ----------------------
+
+                 price_label = Label(bottomFrame3_another, text="Price :", font=("Times", 20, "bold"),
+                                      fg="black", bg="white")
+                 price_label.grid(row=0, column=0, padx=2, pady=10, sticky=W)
+
+                 date_label = Label(bottomFrame3_another, text="Date :", font=("times", 20, "bold"),
+                                               fg="black", bg="white")
+
+                 date_label.grid(row=1, column=0, padx=2, pady=10, sticky=W)
+
+                 # -------------------- entries are defined ----------------------------------
+                 price_entry = Entry(bottomFrame3_another, font=("times", 20, "italic"), width=20, bd=3,
+                                      fg="black", bg="white")
+                 price_entry.grid(row=0, column=1, padx=2, pady=10, sticky=W, columnspan=3)
+
+                 # -------- addding Spinboxes from tkcalendar library ---------------------
+                 year = Spinbox(bottomFrame3_another, from_=2020, to=2025, state="readonly",
+                                font=("times", 20), width=10, justify=CENTER)
+                 year.grid(row=1, column=1, padx=2, pady=10, sticky=W)
+
+                 month = Spinbox(bottomFrame3_another, from_=1, to=12, state="readonly",
+                                 font=("times", 20), width=6, justify=CENTER)
+                 month.grid(row=1, column=2, padx=2, pady=10, sticky=W)
+
+                 day = Spinbox(bottomFrame3_another, from_=1, to=28, state="readonly",
+                                font=("times", 20), width=6, justify=CENTER)
+                 day.grid(row=1, column=2, padx=2, pady=10, sticky=E)
+
+                 # ----------------- buttons with event ------------------------
+                 save_button = Button(bottomFrame3_another, text="Save", font=("times new roman", 24, "bold"),
+                                     command=save_expenses, fg="black", highlightbackground="green")
+                 save_button.grid(row=2, column=2, padx=125, pady=10, ipadx=4, ipady=2, sticky=W, columnspan=2)
+
+                 previous_btn = Button(bottomFrame3_another, text="BACK", font=("times new roman", 24, "bold"),
+                                       command=go_previous, fg="black", highlightbackground="green")
+                 previous_btn.grid(row=3, column=2, padx=120, pady=10, ipadx=2, ipady=2, sticky=W, columnspan=3)
+                 expenses_win.mainloop()
+
+             def open_setting_func():
+                 """
+                 This function continues to next module by hiding this module and  calling another function within it.
+                 :return: None
+                 """
+
+                 myAccount.withdraw()
+                 #  ----------------------- GUI for setting is started ---------------------
+                 setting_win = Toplevel()
+                 setting_win.title("MY SETTING")
+                 setting_win.iconbitmap("setting.ico")
+                 setting_win.geometry("700x600")
+                 setting_win.configure(bg="black")
+                 setting_win.resizable(0, 0)
+
+                 # ----------------------------  frames are added ------------------
+
+                 topFrame4 = Frame(setting_win, bg="yellow")
+                 topFrame4.place(x=10, y=10, width=680, height=80)
+                 bottomFrame4 = Frame(setting_win, bg="white")
+                 bottomFrame4.place(x=10, y=100, width=680, height=490)
+
+                 def delete_my_account():
+                     sure = messagebox.askyesno("Account delete", "Do you want to delete the account ?")
+                     if sure == 1:
+
+                         connection = sqlite3.connect("Accounts_details_holder.db")
+                         cur = connection.cursor()
+
+                         cur.execute("SELECT username, password,oid FROM registration_details_holder")
+                         fetch_data = cur.fetchall()
+                         # print(fetch_data)
+                         # Searching details of the particular user and matching his/her username and  password
+                         # from the database to fetch his/her other details for showing details on the screen
+
+                         for username_search, password_search, oid_search in fetch_data:  # [(username, oid), (username, oid), ..]
+                             # print(username_search, password_search, oid_search)
+
+                             if username_search == username_entry.get() and password_search == password_entry_signup.get():
+                                 actual_oid = oid_search
+                                 # print(type(actual_oid))
+                                 break
+                         cur.execute("DELETE from registration_details_holder WHERE oid=" + str(actual_oid))
+                         print("Account has been deleted successfully.")
+                         messagebox.showinfo("Account deletion", "Your account has been deleted successfully.")
+                         connection.commit()
+                         connection.close()
+
+                         setting_win.destroy()
+                 def change_my_password():
+                     """
+                     This function allows to change password only if proved username and old password are matched with database.
+                     :return: None
+                     """
+                     # checking whether entered oid number in entry are digits or not
+                     for checking in using_oid_entry.get():
+                         if checking.isdigit():
+                             inserted_oid = True
+                         else:
+                             inserted_oid = False
+                             break
+                     print(type(using_oid_entry.get()))
+
+                     # ------------------ retrieving data from database -----------------------
+                     connect_me = sqlite3.connect("Accounts_details_holder.db")
+                     cur = connect_me.cursor()
+                     cur.execute("SELECT username, password, oid FROM registration_details_holder")
+                     fetch_data = cur.fetchall()
+                     #print(fetch_data)
+                     # Searching details of the particular user and matching his/her password
+                     # from the database to fetch his/her other details for showing details on the screen
+
+                     for username_search, password_search, oid_search in fetch_data:
+                         #print(username_search, password_search, oid_search)
+
+                         if username_search == username_entry.get() and password_search == password_entry_signup.get():
+                             actual_oid = oid_search
+
+                             #print(type(actual_oid))
                              break
 
-                 if salary_entry.get() == "" and poultry_farming_entry.get() == "" and\
-                         vegetable_farming_entry.get() == "" and house_rent_entry.get() == "" and \
-                         animal_husbandy_entry.get() == "" and shops_entry.get() == "" and others_entry.get() == "":
+                     connect_me.commit()
+                     connect_me.close()
 
-                     messagebox.showerror("Empty", "All boxes are empty.")
+                     if again_username_entry.get() == "Enter your username" and \
+                             again_password_entry.get() == "Enter your old password" and \
+                             again_new_password_entry.get() == "Enter your new password" and \
+                             again_confirm_password_entry.get() == "Confirm your password" and \
+                             using_oid_entry.get() == "Enter your oid number":
 
-                 # now, allowing digits only
-                 elif inserted_in_numbers is False:
-                     messagebox.showerror("Invalid", "Please, insert budget in numbers only.")
+                         messagebox.showerror("Empty", "All boxes are empty")
 
-                 elif salary_entry.get() == "":
-                     messagebox.showerror("Empty", "Salary box is empty. Please, insert it.")
+                     elif again_username_entry.get() == "Enter your username" or again_username_entry.get() == "":
+                         messagebox.showwarning("Empty", "Username box is empty. Please, insert your username.")
 
-                 elif poultry_farming_entry.get() == "":
-                     messagebox.showerror("Empty", "Poultry Farming box is empty. Please, insert it.")
+                     elif again_password_entry.get() == "Enter your old password" or again_password_entry.get() == "":
+                         messagebox.showwarning("Empty", "Old password box is empty. Please, insert your old password.")
 
-                 elif animal_husbandy_entry.get() == "":
-                     messagebox.showerror("Empty", "Animal husbandry box is empty. Please, insert it.")
+                     elif again_new_password_entry.get() == "Enter your new password" or again_new_password_entry.get() == "":
+                         messagebox.showwarning("Empty", "New password box is empty. Please, insert your new password.")
 
-                 elif house_rent_entry.get() == "":
-                     messagebox.showerror("Empty", "House rent box is empty. Please, insert it.")
+                     elif again_confirm_password_entry.get() == "Confirm your password" or again_confirm_password_entry.get() == "":
+                         messagebox.showwarning("Empty",
+                                                "Confirm password box is empty. Please, insert your confirm password.")
 
-                 elif others_entry.get() == "":
-                     messagebox.showerror("Empty", "Others box is empty. Please, insert it.")
+                     elif using_oid_entry.get() == "Enter your oid number" or using_oid_entry.get() == "":
+                         messagebox.showwarning("Empty",
+                                                "Oid number box is empty. Please, insert your oid number.")
 
-                 elif vegetable_farming_entry.get() == "":
-                     messagebox.showerror("Empty", "Vegetable Farming box is empty. Please, insert it.")
+                     elif again_new_password_entry.get() != again_confirm_password_entry.get():
+                         messagebox.showerror("Invalid", "New password and Confirm password do not match.")
 
-                 elif shops_entry.get() == "":
-                     messagebox.showerror("Empty", "Shop box is empty. Please, insert it.")
+                     elif again_username_entry.get() != username_entry.get():
+                         messagebox.showerror("Invalid",
+                                                "Your username does not match with our database. Please, insert it again.")
 
-                 else:
-                     total_income = float(salary_entry.get()) + float(poultry_farming_entry.get()) + \
-                                    float(animal_husbandy_entry.get()) + float(vegetable_farming_entry.get()) + \
-                                    float(shops_entry.get()) + float(others_entry.get()) + float(house_rent_entry.get())
+                     elif again_password_entry.get() != password_entry_signup.get():
+                         messagebox.showerror("Invalid",
+                                                "Your password does not match with our database. Please, insert it again.")
+                     elif inserted_oid is False:
+                         messagebox.showerror("Invalid oid", "Please , insert in digits only.")
+                     # chaing data type of using_oid_entry from str to int for copmarison as data type of actual_oid is int
+                     elif int(using_oid_entry.get()) != actual_oid:
+                         messagebox.showerror("Invalid oid", "Inserted oid number does not match.")
 
-                     print("Total income is : ", total_income)
+                     else:
+                         #print("working")
 
-                     # clearing the entry fields after inserting info
-                     salary_entry.delete(0, END)
-                     poultry_farming_entry.delete(0, END)
-                     vegetable_farming_entry.delete(0, END)
-                     house_rent_entry.delete(0, END)
-                     animal_husbandy_entry.delete(0, END)
-                     shops_entry.delete(0, END)
-                     others_entry.delete(0, END)
+                         # ------------ retrieving all data of this user only ---------------------
+                         connector = sqlite3.connect("Accounts_details_holder.db")
+                         cur = connector.cursor()
+                         cur.execute("SELECT * FROM registration_details_holder WHERE oid=" + str(actual_oid))
+                         one_user_records = cur.fetchall()
+                         print(one_user_records)
 
-                     global income
-                     global fetched_income
-                     income += total_income + float(fetched_income)
-                     fetched_income = ""
+                         # --------------------updating password of the user-------------
+                         cur.execute("""UPDATE registration_details_holder SET password = :new_password WHERE oid = :oid""",
+                                     {'new_password' : again_confirm_password_entry.get(), 'oid' : using_oid_entry.get()})
 
-                     # overwriting the value of income by new value in created file
-                     with open(str(password_entry_signup.get()+"_income.txt"), "w+") as income_file:
-                         income_file.write(str(income))
+                         connector.commit()
+                         connector.close()
+
+                         messagebox.showinfo("Password Changed", "Your password has been changed successfully.")
+
+                         again_username_entry.delete(0, END)
+                         again_password_entry.delete(0, END)
+                         again_new_password_entry.delete(0, END)
+                         again_confirm_password_entry.delete(0, END)
+                         using_oid_entry.delete(0, END)
 
 
-                     messagebox.showinfo("Total Budget", "Your total budget is $" + str(total_income) +
-                                         " and total income is " + str(income) + " Thank You!")
+
+                 # function created to clear the entry on click or tab
+                 def clear_again_username_entry(event):
+                     """
+                     This clears the username entry on clicking the entry or tab key.
+                     :param event: int
+                     :return: None
+                     """
+                     again_username_entry.delete(0, END)
+
+                 def clear_again_password_entry(event):
+                     """
+                     This clears the old password entry on clicking the entry or tab key.
+                     :param event: int
+                     :return: None
+                     """
+                     again_password_entry.delete(0, END)
+                     again_password_entry.configure(show="•")
+
+                 def clear_again_new_password_entry(event):
+                     """
+                     This clears the new password entry on clicking the entry or tab key.
+                     :param event: int
+                     :return: None
+                     """
+                     again_new_password_entry.delete(0, END)
+                     again_new_password_entry.configure(show="•")
+
+                 def clear_again_confirm_password_entry(event):
+                     """
+                     This clears the confirm password entry on clicking the entry or tab key.
+                     :param event: int
+                     :return: None
+                     """
+                     again_confirm_password_entry.delete(0, END)
+                     again_confirm_password_entry.configure(show="•")
+
+                 def clear_using_oid_entry(event):
+                     """
+                     This clears the confirm password entry on clicking the entry or tab key.
+                     :param event: int
+                     :return: None
+                     """
+                     using_oid_entry.delete(0, END)
 
 
+                 def back_to_myAccount():
+                     """
+                     This function returns to the previous page i.e My account by exiting current page.
+                     :return: None
+                     """
+                     myAccount.deiconify()
+                     setting_win.destroy()
 
-             def go_back():
+                 #  ================================= headline added ======================================
+
+                 heading_img4 = PhotoImage(file="setting.png")
+                 heading4 = Label(topFrame4, text="MY SETTING", font=("Copperplate", 32, "bold"),
+                                 bg="green", fg="yellow", bd=6, relief=RIDGE)
+                 heading4.pack(side=TOP, fill=X, expand=0)
+                 heading4.config(image=heading_img4, compound=LEFT)
+
+                 # ----------------- labels are defined --------------------
+
+                 again_username_label = Label(bottomFrame4, text="Username :", font=("ai bayan ", 20, "bold"),
+                                      fg="black", bg="white")
+                 again_username_label.grid(row=0, column=0, padx=2, pady=10, sticky=W)
+
+                 again_password_label = Label(bottomFrame4, text="Old password:", font=("ai bayan", 20, "bold"),
+                                               fg="black", bg="white")
+
+                 again_password_label.grid(row=1, column=0, padx=2, pady=10, sticky=W)
+
+                 again_new_password_label = Label(bottomFrame4, text="New password :",
+                                                 font=("ai bayan", 20, "bold"), fg="black", bg="white")
+                 again_new_password_label.grid(row=2, column=0, padx=2, pady=10, sticky=W)
+
+                 again_confirm_password_label = Label(bottomFrame4, text="Confirm password :", font=("ai bayan", 20, "bold"),
+                                          fg="black", bg="white")
+
+                 again_confirm_password_label.grid(row=3, column=0, padx=2, pady=10, sticky=W)
+
+                 using_oid_label = Label(bottomFrame4, text="Oid number :",
+                                                      font=("ai bayan", 20, "bold"), fg="black", bg="white")
+
+                 using_oid_label.grid(row=4, column=0, padx=2, pady=10, sticky=W)
+
+                 # -------------------- entries are defined  with functions-----------------------------
+                 again_username_type = StringVar()
+                 again_username_entry = Entry(bottomFrame4, font=("cambria", 18, "italic"), width=20, bd=3,
+                                      textvariable=again_username_type, fg="black", bg="white")
+                 again_username_entry.grid(row=0, column=1, padx=2, pady=10, sticky=W)
+                 again_username_entry.insert(0, "Enter your username")
+                 # on clicking 'tab' key, FocusIn allows to enter in password entry
+                 again_username_entry.bind("<FocusIn>", clear_again_username_entry)
+
+
+                 again_password_type = StringVar()
+                 again_password_entry = Entry(bottomFrame4, font=("cambria", 18, "italic"), width=20, bd=3,
+                                               textvariable=again_password_type, fg="black", bg="white")
+                 again_password_entry.grid(row=1, column=1, padx=2, pady=10, sticky=W)
+                 again_password_entry.insert(0, "Enter your old password")
+                 again_password_entry.bind("<FocusIn>", clear_again_password_entry)
+
+
+                 again_new_password_type = StringVar()
+                 again_new_password_entry = Entry(bottomFrame4, font=("cambria", 18, "italic"), width=20, bd=3,
+                                                textvariable=again_new_password_type, fg="black", bg="white")
+                 again_new_password_entry.grid(row=2, column=1, padx=2, pady=10, sticky=W)
+                 again_new_password_entry.insert(0, "Enter your new password")
+                 again_new_password_entry.bind("<FocusIn>", clear_again_new_password_entry)
+
+
+                 again_confirm_password_type = StringVar()
+                 again_confirm_password_entry = Entry(bottomFrame4, font=("cambria", 18, "italic"), width=20, bd=3,
+                                          textvariable=again_confirm_password_type, fg="black", bg="white")
+                 again_confirm_password_entry.grid(row=3, column=1, padx=2, pady=10, sticky=W)
+
+                 again_confirm_password_entry.insert(0, "Confirm your password")
+                 again_confirm_password_entry.bind("<FocusIn>", clear_again_confirm_password_entry)
+
+
+                 using_oid_entry = Entry(bottomFrame4, font=("cambria", 18, "italic"), width=20, bd=3,
+                                                      fg="black", bg="white")
+                 using_oid_entry.grid(row=4, column=1, padx=2, pady=10, sticky=W)
+
+                 using_oid_entry.insert(0, "Enter your oid number")
+                 using_oid_entry.bind("<FocusIn>", clear_using_oid_entry)
+
+                 # -------------------------- buttons with event are define ------------------------------
+
+                 password_change_btn = Button(bottomFrame4, text="Change password", font=("times new roman", 24, "bold"),
+                                     command=change_my_password, fg="black", highlightbackground="green")
+                 password_change_btn.grid(row=5, column=1, padx=34, pady=10, ipadx=2, ipady=2, sticky=W)
+
+                 delete_my_ac_btn = Button(bottomFrame4, text="Delete My Account", command=delete_my_account,
+                                    font=("times new roman", 24, "bold"), fg="black", highlightbackground="green")
+                 delete_my_ac_btn.grid(row=6, column=1, padx=30, pady=10, ipadx=2, ipady=2, sticky=W)
+
+                 back_change_btn = Button(bottomFrame4, text="BACK", font=("times new roman", 24, "bold"),
+                                              command=back_to_myAccount, fg="black", highlightbackground="green")
+                 back_change_btn.grid(row=7, column=1, padx=65, pady=10, ipadx=2, ipady=2, sticky=W)
+
+             def forLogout():
                  """
-                 This function returns the previous page.
+                 This function asks for log out or not.
                  :return: None
                  """
-
-                 myAccount.deiconify()
-                 income_win.destroy()
-             # ----------------------------  frames are added ------------------
-
-             topFrame2 = Frame(income_win, bg="yellow")
-             topFrame2.place(x=10, y=10, width=680, height=80)
-             bottomFrame2 = Frame(income_win, bg="white")
-             bottomFrame2.place(x=10, y=100, width=680, height=590)
-
-             #  ================================= headline added ======================================
-             heading_img = PhotoImage(file="income.png")
-             heading = Label(topFrame2, text="MY INCOME", font=("Copperplate", 32, "bold"),
-                             bg="green", fg="yellow", bd=6, relief=RIDGE)
+                 response_user = messagebox.askyesno("Log out", "Do you want to Log out ?")
+                 if response_user == 1:
+                     signUp.deiconify()
+                     username_entry.delete(0, END)
+                     password_entry_signup.delete(0, END)
+                     myAccount.destroy()
+             #  ============================================== headline added ====================================
+             heading_img = PhotoImage(file="incomeAndExpenditure.png")
+             heading = Label(myAccount, text="INCOME AND EXPENSES ANALYZER", font=("Copperplate", 32, "bold"),
+                             bg="silver", bd=6, relief=RIDGE)
              heading.pack(side=TOP, fill=X, expand=0)
              heading.config(image=heading_img, compound=LEFT)
 
-             # ----------------------------- labels are added -------------------------------
-             instruction = "Please, insert your budget (only in numbers) from the following sectors :"
+             # ============================================== different frames are added ===============================
+             center_frame = Frame(myAccount, bg="#7C7474", bd=6, relief=SOLID)
+             center_frame.place(x=180, y=70, width=330, height=500)
 
-             instruction_label = Label(bottomFrame2, text=instruction, font=("times new roman", 22, "italic"),
-                                  fg="black", bg="white")
-             instruction_label.grid(row=0, column=0, columnspan=2, padx=2, pady=10, sticky=W)
+             # ================================ Buttons with events are defined in left_frame  ===========================
 
-             salary_label = Label(bottomFrame2, text="Salary :", font=("times new roman", 20, "bold"),
-                                   fg="black", bg="white")
-             salary_label.grid(row=1, column=0, padx=2, pady=10, sticky=W)
+             myProfile_button = Button(center_frame, text="My Profile", font=("Times New Roman", 24, "bold"),
+                                       command=open_profile_func, highlightbackground="green")
+             myProfile_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
 
-             poultry_farming_label = Label(bottomFrame2, text="Poultry Farming :", font=("times new roman", 20, "bold"),
-                                 fg="black", bg="white")
+             income_button = Button(center_frame, text="My Income", font=("Times New Roman", 24, "bold"),
+                                    command=open_income_func, highlightbackground="green", fg="black")
+             income_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
 
-             poultry_farming_label.grid(row=2, column=0, padx=2, pady=10, sticky=W)
+             expenses_button = Button(center_frame, text="My Expenses", font=("Times New Roman", 24, "bold"),
+                                    command=open_expenses_func, highlightbackground="green", fg="black")
 
-             vegetable_farming_label = Label(bottomFrame2, text="Vegetable Farming :", font=("times new roman", 20, "bold"),
-                                  fg="black", bg="white")
-             vegetable_farming_label.grid(row=3, column=0, padx=2, pady=10, sticky=W)
+             expenses_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
 
-             house_rent_label = Label(bottomFrame2, text="House Rent :", font=("times new roman", 20, "bold"),
-                                           fg="black", bg="white")
+             setting_button = Button(center_frame, text="My Setting", font=("Times New Roman", 24, "bold"),
+                                     command=open_setting_func,highlightbackground="green")
+             setting_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
 
-             house_rent_label.grid(row=4, column=0, padx=2, pady=10, sticky=W)
+             logout_button = Button(center_frame, text="Log Out", font=("Times New Roman", 24, "bold"),
+                                   command=forLogout, highlightbackground="green")
+             logout_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
 
-             animal_husbandy_label = Label(bottomFrame2, text="Animal Husbandry :", font=("times new roman", 20, "bold"),
-                                           fg="black", bg="white")
-
-             animal_husbandy_label.grid(row=5, column=0, padx=2, pady=10, sticky=W)
-
-             shops_label = Label(bottomFrame2, text="Shops :",
-                                             font=("times new roman", 20, "bold"),
-                                             fg="black", bg="white")
-             shops_label.grid(row=6, column=0, padx=2, pady=10, sticky=W)
-
-             others_label = Label(bottomFrame2, text="Others :", font=("times new roman", 20, "bold"),
-                                      fg="black", bg="white")
-
-             others_label.grid(row=7, column=0, padx=2, pady=10, sticky=W)
-
-             # -------------------------- entries are added ------------------------------
-
-             salary_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
-                                  fg="black", bg="white")
-             salary_entry.grid(row=1, column=1, padx=2, pady=10, sticky=W)
-
-             poultry_farming_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
-                                 fg="black", bg="white")
-             poultry_farming_entry.grid(row=2, column=1, padx=2, pady=10, sticky=W)
-
-             vegetable_farming_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
-                                  fg="black", bg="white")
-             vegetable_farming_entry.grid(row=3, column=1, padx=2, pady=10, sticky=W)
-
-             house_rent_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
-                                           fg="black", bg="white")
-             house_rent_entry.grid(row=4, column=1, padx=2, pady=10, sticky=W)
-
-             animal_husbandy_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
-                                           fg="black", bg="white")
-             animal_husbandy_entry.grid(row=5, column=1, padx=2, pady=10, sticky=W)
-
-             shops_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
-                                             fg="black", bg="white")
-             shops_entry.grid(row=6, column=1, padx=2, pady=10, sticky=W)
-
-             others_entry = Entry(bottomFrame2, font=("cambria", 20, "italic"), width=20, bd=3,
-                                      fg="black", bg="white")
-             others_entry.grid(row=7, column=1, padx=2, pady=10, sticky=W)
-
-             # ------------------ button with event is defined -----------------
-
-             add_button = Button(bottomFrame2, text="Add budget", font=("times new roman", 24, "bold"),
-                                 command=adding_budget, fg="black", highlightbackground="green")
-             add_button.grid(row=8, column=1, padx=65, pady=10, ipadx=2, ipady=2, sticky=W)
-
-             back_btn = Button(bottomFrame2, text="BACK", font=("times new roman", 24, "bold"), command=go_back,
-                                 fg="black", highlightbackground="green")
-             back_btn.grid(row=9, column=1, padx=90, pady=10, ipadx=2, ipady=2, sticky=W)
-
-             income_win.mainloop()
-
-         def open_expenses_func():
-             """
-             This function continues to next module by hiding this module and  calling another function within it.
-             :return: None
-             """
-             myAccount.withdraw()
-             #  ----------------------- GUI for expenses is started ---------------------
-             expenses_win = Toplevel()
-             expenses_win.title("MY EXPENSES")
-             expenses_win.iconbitmap("expenses.ico")
-             expenses_win.geometry("700x600")
-             expenses_win.configure(bg="black")
-             expenses_win.resizable(0, 0)
-
-             # ----------------------------  frames are added ------------------
-
-             topFrame3 = Frame(expenses_win, bg="yellow")
-             topFrame3.place(x=10, y=10, width=680, height=80)
-             bottomFrame3 = Frame(expenses_win, bg="red")
-             bottomFrame3.place(x=10, y=100, width=680, height=490)
-
-             #  ================================= headline added ======================================
-             heading_img = PhotoImage(file="expenses.png")
-             heading = Label(topFrame3, text="MY EXPENSES", font=("Copperplate", 32, "bold"),
-                             bg="green", fg="yellow", bd=6, relief=RIDGE)
-             heading.pack(side=TOP, fill=X, expand=0)
-             heading.config(image=heading_img, compound=LEFT)
-
-             expenses_win.mainloop()
-
-         def open_setting_func():
-             """
-             This function continues to next module by hiding this module and  calling another function within it.
-             :return: None
-             """
-             myAccount.withdraw()
-
-         #  ============================================== headline added ====================================
-         heading_img = PhotoImage(file="incomeAndExpenditure.png")
-         heading = Label(myAccount, text="INCOME AND EXPENSES ANALYZER", font=("Copperplate", 32, "bold"),
-                         bg="silver", bd=6, relief=RIDGE)
-         heading.pack(side=TOP, fill=X, expand=0)
-         heading.config(image=heading_img, compound=LEFT)
-
-         # ============================================== different frames are added ===============================
-         center_frame = Frame(myAccount, bg="#7C7474", bd=6, relief=SOLID)
-         center_frame.place(x=180, y=70, width=330, height=500)
-
-         # ================================ Buttons with events are defined in left_frame  ===========================
-
-         myProfile_button = Button(center_frame, text="My Profile", font=("Times New Roman", 24, "bold"),
-                                   command=open_profile_func, highlightbackground="green")
-         myProfile_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
-
-         income_button = Button(center_frame, text="My Income", font=("Times New Roman", 24, "bold"),
-                                command=open_income_func, highlightbackground="green", fg="black")
-         income_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
-
-         expenses_button = Button(center_frame, text="My Expenses", font=("Times New Roman", 24, "bold"),
-                                command=open_expenses_func, highlightbackground="green", fg="black")
-
-         expenses_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
-
-         setting_button = Button(center_frame, text="My Setting", font=("Times New Roman", 24, "bold"),
-                                 command=open_setting_func,highlightbackground="green")
-         setting_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
-
-         logout_button = Button(center_frame, text="Log Out", font=("Times New Roman", 24, "bold"),
-                                highlightbackground="green")
-         logout_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
-
-         myAccount.mainloop()
+             myAccount.mainloop()
 
         else:
             messagebox.showerror("Error", "Invalid username and password.")
