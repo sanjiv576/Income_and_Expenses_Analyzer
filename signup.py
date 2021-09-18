@@ -1,6 +1,8 @@
 """
 This module accepts username and password to signup.
 """
+import os
+import sys
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
@@ -185,6 +187,8 @@ def create_my_account():
         This returns Registration Form window to previous Signup window.
         :return: None
         """
+        username_entry.delete(0, END)
+        password_entry_signup.delete(0, END)
         global vacant_row
         # assigning the value of vacant_row as 0 because after visiting Registration Form the value of it changes so,
         # its value is made 0 to execute vacant_row <= 30 again from 0
@@ -313,11 +317,12 @@ def create_my_account():
 row_num = 0
 # for storing data of a user from profile page
 fetched_income = "0"
-fetched_expenses = 0
-fetched_balance = 0
-income = 0
-spend = 0
-balance = 0
+fetched_expenses = fetched_balance = 0
+# for changing each value after adding or subtracting in balance as income and spend cases
+income = spend = balance = 0
+# only for opening once
+income_fetch_first = expense_fetch_first = balance_fetch_first = file_create = 0
+
 # function for exiting Signup window as clicked on "EXIT" button.
 def exit_signup():
     """
@@ -344,7 +349,7 @@ def submit():
     elif username_entry.get() == "admin" and password_entry_signup.get() == "admin":
         signUp.withdraw()
 
-        # ------------------GUI for AdminAccount starts from here-----------------------
+        # ------------------ GUI for AdminAccount starts from here-----------------------
         adminAccount = Toplevel()
         adminAccount.title("Admin")
         adminAccount.geometry("1400x800")
@@ -429,7 +434,7 @@ def submit():
         scrollbar_y.pack(side=RIGHT, fill=Y)
         """
         adminAccount.mainloop()
-
+                     # ------------------ GUI for AdminAccount ends here-----------------------
 
     else:
 
@@ -442,7 +447,9 @@ def submit():
         # checking whether it is empty or not, if empty shows error message , if no allows to login
         if len(rows) > 0:
              messagebox.showinfo("Account Created", "Login has been successfully done")
-
+             # this is again assigned because to stop error
+             global file_create
+             file_create = 0
              # --------------------------------- User account GUI and database are started ------------------------------
              signUp.withdraw()
              myAccount = Toplevel()
@@ -452,15 +459,19 @@ def submit():
              myAccount.configure(bg="black")
              myAccount.resizable(False, False)
 
-             # To create 3 different files of the user so, a+ mode is used.
-             with open(str(password_entry_signup.get() + "_income.txt"), "a+") as f:
-                 pass
 
-             with open(str(password_entry_signup.get() + "_expenses.txt"), "a+") as file:
-                 pass
+             if file_create == 0:
+                 # To create 3 different files of the user for once time so, a+ mode is used.
+                 with open(str(password_entry_signup.get() + "_income.txt"), "a+") as f:
+                     f.write("0")
 
-             with open(str(password_entry_signup.get() + "_balance.txt"), "a+") as file:
-                 pass
+                 with open(str(password_entry_signup.get() + "_expenses.txt"), "a+") as file:
+                     file.write("0")
+
+                 with open(str(password_entry_signup.get() + "_balance.txt"), "a+") as file:
+                     file.write("0")
+
+                 file_create += 1
 
              def open_profile_func():
                  """
@@ -696,25 +707,43 @@ def submit():
                          shops_entry.delete(0, END)
                          others_entry.delete(0, END)
 
+                         global income_fetch_first, income, fetched_income
 
-                         global income
-                         global fetched_income
-                         #income += total_income
-                         income = total_income
-                         fetched_income = ""
+                         if income_fetch_first == 0:
+                             # fetching previous stored income value after opening first
+                             income += total_income + float(fetched_income)
+                             fetched_income =""
+
+                             # changing value of income_fetch_first because not to run this instead this , run else block
+                             income_fetch_first += 1
+
+                         else:
+                             # adding new budget in previous stored income after opening more than first
+                             income += total_income
+                             fetched_income = ""
 
                          # overwriting the value of income by new value in created file
                          with open(str(password_entry_signup.get()+"_income.txt"), "w+") as income_file:
                              income_file.write(str(income))
 
                          # maintaining balance after adding budget
-                         global balance
-                         balance += income
+                         global balance, balance_fetch_first
+                         if balance_fetch_first == 0:
+                             # fetching previous stored balance after opening first
+                             balance += total_income + float(fetched_balance)
+
+                             # changing value of balance_fetch_first because not to run this instead this , run else block
+                             balance_fetch_first += 1
+
+                         else:
+                             # adding balance in previous stored income after opening more than first
+                             balance += total_income
+
                          with open(str(password_entry_signup.get() + "_balance.txt"), "r+") as balance_file:
                              balance_file.write(str(balance))
 
-                         messagebox.showinfo("Total Budget", "Your total budget is $" + str(total_income) +
-                                             " and total income is $" + str(income) + " Thank You!")
+                         messagebox.showinfo("Total Budget", "Your recent added budget is $" + str(total_income) +
+                               ", total income is $" + str(income) + " and your new balance is $" + str(balance) + ". Thank You!")
 
 
 
@@ -849,7 +878,7 @@ def submit():
                      This function saves expenditure of the user as float.
                      :return: None
                      """
-                     # checking whether entered information in 'Contact' entry are digits or not
+                     # checking whether entered information in 'price' entry are digits or not
                      for checker in price_entry.get():
                          if checker.isdigit():
                              inserted_price = True
@@ -863,20 +892,45 @@ def submit():
                          messagebox.showerror("Invalid", "Please , insert digits only in it.")
 
                      else:
-                         global spend
-                         spend += float(price_entry.get())
-
-                         with open(str(password_entry_signup.get()+"_expenses.txt"), "w+") as expenses_file:
-                             expenses_file.write(str(spend))
-
-                         price_entry.delete(0, END)
-                         messagebox.showinfo("Expenses", "Your expenditure is " + str(spend)+ " Thank you !")
 
                          # maintaining balance after adding expenses budget so, subtracting now
                          global balance
-                         balance -= spend
-                         with open(str(password_entry_signup.get() + "_balance.txt"), "r+") as balance_file:
-                             balance_file.write(str(balance))
+                         balance = float(fetched_balance)
+                         print(f"Your ba. {balance}")
+                         # balance stored in new variable because just to show warning if balance is low
+
+                         current_balance = balance
+                         balance -= float(price_entry.get())
+
+                         if balance > 0:
+                             global spend, expense_fetch_first
+
+                             if expense_fetch_first == 0:
+
+                                spend += float(price_entry.get()) + float(fetched_expenses)
+                                expense_fetch_first += 1
+
+                             else:
+                                 spend += float(price_entry.get())
+
+                             with open(str(password_entry_signup.get() + "_expenses.txt"), "w+") as expenses_file:
+                                 expenses_file.write(str(spend))
+
+                             with open(str(password_entry_signup.get() + "_balance.txt"), "r+") as balance_file:
+                                 balance_file.write(str(balance))
+                             messagebox.showinfo("Expenses", "Your recent expenditure is $" + price_entry.get() +
+                                                 ", total expenditure is $" + str(spend) +
+                                                 " and your new balance is $" + str(balance) + " Thank you !")
+                         else:
+                             # inserted price is added with existed balance because to make balance after subtracting
+                             balance += float(price_entry.get())
+                             messagebox.showwarning("No balance", "Sorry, no enough money. Your current balance is $"
+                                                    + str(current_balance))
+
+                         price_entry.delete(0, END)
+
+
+
 
                  # ----------------------------  frames are added ------------------
 
@@ -1001,6 +1055,7 @@ def submit():
                          connection.close()
 
                          setting_win.destroy()
+                         sys.exit()
                  def change_my_password():
                      """
                      This function allows to change password only if proved username and old password are matched with database.
@@ -1021,7 +1076,7 @@ def submit():
                      cur.execute("SELECT username, password, oid FROM registration_details_holder")
                      fetch_data = cur.fetchall()
                      #print(fetch_data)
-                     # Searching details of the particular user and matching his/her password
+                     # Searching details of the particular user and matching his/her password and username
                      # from the database to fetch his/her other details for showing details on the screen
 
                      for username_search, password_search, oid_search in fetch_data:
@@ -1101,6 +1156,12 @@ def submit():
                          again_new_password_entry.delete(0, END)
                          again_confirm_password_entry.delete(0, END)
                          using_oid_entry.delete(0, END)
+
+                         signUp.deiconify()
+                         username_entry.delete(0, END)
+                         password_entry_signup.delete(0, END)
+                         setting_win.destroy()
+                         myAccount.destroy()
 
 
 
