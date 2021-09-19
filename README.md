@@ -1,2 +1,3 @@
 # Income_and_Expenses_Analyzer
-#Introduction
+![Tux, the Linux mascot]()
+
