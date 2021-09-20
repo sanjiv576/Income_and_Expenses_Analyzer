@@ -31,11 +31,11 @@ This application includes following features:
 > - dropdown menu and so on
 3. **SQLite for database**
 > Database query: create,select, insert and delete.
-3. **File handling**
-4. **tkcalendar**
+4. **File handling**
+5. **tkcalendar**
 > third-party library
-5. **os**
-6. **sys**
+6. **os**
+7. **sys**
 
 # Before running the application
 After, it is downloaded its zip file  or cloned, you must install **third-party library** in order to execute properly. Run the following commands in terminal.
