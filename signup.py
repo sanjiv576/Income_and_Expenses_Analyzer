@@ -1,13 +1,15 @@
 """
 This module accepts username and password to signup.
 """
-import os
-import sys
 from tkinter import *
 from tkinter import messagebox
 import sqlite3
 from tkinter import ttk
-from adminAccount import open_adminAccount
+# for checking whether a file is existing or not
+import os.path
+# now allowing to access variables and functions which interact strongly with a python interpreter (this is optional)
+import sys
+
 # using third party library , for installation ===> pip install tkcalendar
 from tkcalendar import *
 
@@ -321,7 +323,7 @@ fetched_expenses = fetched_balance = 0
 # for changing each value after adding or subtracting in balance as income and spend cases
 income = spend = balance = 0
 # only for opening once
-income_fetch_first = expense_fetch_first = balance_fetch_first = file_create = 0
+income_fetch_first = expense_fetch_first = balance_fetch_first = 0
 
 # function for exiting Signup window as clicked on "EXIT" button.
 def exit_signup():
@@ -373,6 +375,7 @@ def submit():
             if user_respond_for_quit == 1:
                 username_entry.delete(0, END)
                 password_entry_signup.delete(0, END)
+
                 signUp.deiconify()
                 adminAccount.destroy()
 
@@ -448,19 +451,25 @@ def submit():
         if len(rows) > 0:
              messagebox.showinfo("Account Created", "Login has been successfully done")
              # this is again assigned because to stop error
-             global file_create
-             file_create = 0
+
              # --------------------------------- User account GUI and database are started ------------------------------
              signUp.withdraw()
              myAccount = Toplevel()
              myAccount.title("MY ACCOUNT")
              myAccount.iconbitmap("see.ico")
-             myAccount.geometry("700x600")
+             myAccount.geometry("700x650")
              myAccount.configure(bg="black")
              myAccount.resizable(False, False)
 
+             # now checking whether a file is existing or not. if yes it is True, if not False.
+             # This only runs when a new account is created and using for the first time.
+             # here how it works, not(...) and not(..) and not(..) ====> not(False) and not(False) and not(False)
+             # ====> True and True and True
 
-             if file_create == 0:
+             if not(os.path.isfile(str(password_entry_signup.get() + "_income.txt"))) and\
+                     not(os.path.isfile(str(password_entry_signup.get() + "_income.txt"))) and\
+                     not(os.path.isfile(str(password_entry_signup.get() + "_income.txt"))):
+
                  # To create 3 different files of the user for once time so, a+ mode is used.
                  with open(str(password_entry_signup.get() + "_income.txt"), "a+") as f:
                      f.write("0")
@@ -471,7 +480,7 @@ def submit():
                  with open(str(password_entry_signup.get() + "_balance.txt"), "a+") as file:
                      file.write("0")
 
-                 file_create += 1
+
 
              def open_profile_func():
                  """
@@ -893,16 +902,22 @@ def submit():
 
                      else:
 
-                         # maintaining balance after adding expenses budget so, subtracting now
-                         global balance
-                         balance = float(fetched_balance)
-                         print(f"Your ba. {balance}")
-                         # balance stored in new variable because just to show warning if balance is low
+                         # -------- as a whole maintaining balance after adding expenses budget so, subtracting now --------
 
+
+                         global balance
+                         # now checking whether a file is existing or not. if yes it is True, if not False.
+
+                         #if os.path.isfile(str(password_entry_signup.get() + "_income.txt")):
+                         balance = float(fetched_balance) # to read previous
+
+                         # now , balance stored in new variable because just to show warning if balance is low
                          current_balance = balance
+                         print(f"Your ba. {balance}")
                          balance -= float(price_entry.get())
 
-                         if balance > 0:
+                         # checking balance is lesser than 0 , if yes show warning , if no do calcaulation
+                         if balance >= 0:
                              global spend, expense_fetch_first
 
                              if expense_fetch_first == 0:
@@ -1056,6 +1071,7 @@ def submit():
 
                          setting_win.destroy()
                          sys.exit()
+
                  def change_my_password():
                      """
                      This function allows to change password only if proved username and old password are matched with database.
@@ -1156,10 +1172,10 @@ def submit():
                          again_new_password_entry.delete(0, END)
                          again_confirm_password_entry.delete(0, END)
                          using_oid_entry.delete(0, END)
-
-                         signUp.deiconify()
                          username_entry.delete(0, END)
                          password_entry_signup.delete(0, END)
+
+                         signUp.deiconify()
                          setting_win.destroy()
                          myAccount.destroy()
 
@@ -1309,7 +1325,7 @@ def submit():
 
              def forLogout():
                  """
-                 This function asks for log out or not.
+                 This function asks for log out or not from myAccount to signUp.
                  :return: None
                  """
                  response_user = messagebox.askyesno("Log out", "Do you want to Log out ?")
@@ -1318,6 +1334,15 @@ def submit():
                      username_entry.delete(0, END)
                      password_entry_signup.delete(0, END)
                      myAccount.destroy()
+
+             def dateToday():
+                 """
+                 This function shows today date as clicked on 'Date Today' button.
+                 :return: None
+                 """
+                 DateEntry(center_frame, width=10).pack()
+
+
              #  ============================================== headline added ====================================
              heading_img = PhotoImage(file="incomeAndExpenditure.png")
              heading = Label(myAccount, text="INCOME AND EXPENSES ANALYZER", font=("Copperplate", 32, "bold"),
@@ -1325,11 +1350,11 @@ def submit():
              heading.pack(side=TOP, fill=X, expand=0)
              heading.config(image=heading_img, compound=LEFT)
 
-             # ============================================== different frames are added ===============================
+             # ======================================== different frames are added ===============================
              center_frame = Frame(myAccount, bg="#7C7474", bd=6, relief=SOLID)
-             center_frame.place(x=180, y=70, width=330, height=500)
+             center_frame.place(x=180, y=70, width=330, height=550)
 
-             # ================================ Buttons with events are defined in left_frame  ===========================
+             # ================================ Buttons with events are defined in center frame =====================
 
              myProfile_button = Button(center_frame, text="My Profile", font=("Times New Roman", 24, "bold"),
                                        command=open_profile_func, highlightbackground="green")
@@ -1351,6 +1376,10 @@ def submit():
              logout_button = Button(center_frame, text="Log Out", font=("Times New Roman", 24, "bold"),
                                    command=forLogout, highlightbackground="green")
              logout_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
+
+             date_button = Button(center_frame, text="Date Today", font=("Times New Roman", 24, "bold"),
+                                    command=dateToday, highlightbackground="green")
+             date_button.pack(padx=54, pady=20, ipadx=4, ipady=6)
 
              myAccount.mainloop()
 
