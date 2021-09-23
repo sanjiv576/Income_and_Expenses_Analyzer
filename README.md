@@ -20,11 +20,11 @@ This application includes following features:
 - Calculation of current balance after adding budget and expenditure.
 - Pytests.
 
-# Tools Used
+## Tools Used
 1. **Python programming language**
 2. **Tkinter for graphical user interface**
 > - messagebox
-> - ttk
+
 > - Treeview
 > - checkbutton
 > - radiobuttons
@@ -37,7 +37,7 @@ This application includes following features:
 6. **os**
 7. **sys**
 
-# Before running the application
+# BEFORE RUNNING THE APPLICATION
 After, it is downloaded its zip file  or cloned, you must install **third-party library** in order to execute properly. Run the following commands in terminal.
 
 1. **pip install tkcalendar**
@@ -45,13 +45,27 @@ After, it is downloaded its zip file  or cloned, you must install **third-party 
 2. **pip install pytest**
 > This is for pytesting.
 
-# Some screenshots or gifs
-.........
-.........
-remaining 
-..........
-..........
+**Note:**
+#### Run 'signup.py' module not other modules.
 
+# TESTING SCREENSHOTS
+## Blackbox testing
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u2.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u3.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u4.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u5.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u6.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u7.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u8.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u9.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u10.png)
+<br>
+
+## Pytest testing
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/pp1.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/pp2.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/pp3.png)
+<br>
 ## ABOUT ME
 **Sanjiv Shrestha** <br>
 **Coventry id: 11782461** <br>
