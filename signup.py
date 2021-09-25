@@ -50,6 +50,40 @@ my_frame.place(x=640, y=30, width=300, height=650)
 # adding blue background color i.e #6964EE in the frame
 my_frame.config(bg="#6964EE")
 
+def digit_checker(to_be_check):
+    """
+    This function accepts data from the users and checks whether provided data are digit or not. If yes, it returns True
+    if no, it returns False
+    :param to_be_check: int
+    :return:Boolean
+    """
+    length_contact = len(to_be_check.get())
+    # knowing the length of inserted data to return Boolean value(i.e True), if all inserted data are digit
+    adder = 0
+    #print(length_contact)
+    for check in to_be_check.get():
+        if check.isdigit():
+            adder += 1
+            #print("adder", adder)
+            inserted_info = True
+
+            if length_contact == adder:
+                return inserted_info
+
+        else:
+            inserted_info = False
+            return inserted_info
+            break
+
+
+def clear_entry():
+    """
+    This function clears username and password entries of signup page.
+    :return: None
+    """
+    username_entry.delete(0, END)
+    password_entry_signup.delete(0, END)
+
 
 # creating a new window for registration as clicked on 'Don't have an account ?' button
 # -----------------------------------Coding for Registration Form starts ----------------------------------
@@ -83,14 +117,14 @@ def create_my_account():
         selected_gender = indicator.get()
         #print(selected_gender)
         # checking whether entered information in 'Contact' entry are digits or not
-        for check in contact_entry.get():
-            if check.isdigit():
-                inserted_info = True
-            else:
-                inserted_info = False
-                break
+        result = digit_checker(contact_entry)
+        #print("Contact_entry result is : ", result)
 
-        if f_nam_entry.get() == "" and l_nam_entry.get() == "" and user_name_entry.get() == "" and contact_entry.get() =="" and \
+        # now checking length of the contact is equal to ten or not
+        contact_length = len(str(contact_entry.get()))
+        print(contact_length)
+
+        if f_nam_entry.get() == "" and l_nam_entry.get() == "" and user_name_entry.get() == "" and contact_entry.get() == "" and \
                 password_entry.get() == "" and conf_password_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill all boxes.")
 
@@ -100,11 +134,20 @@ def create_my_account():
         elif l_nam_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill last name box.")
 
-        elif contact_entry.get() == "":
-            messagebox.showwarning("EMPTY! ", "Please , fill  confirm password box.")
+        elif selected_gender == "Choose options":
+            messagebox.showerror("Invalid", "Please, choose gender.")
 
-        elif inserted_info is False:
+        elif contact_entry.get() == "":
+            messagebox.showwarning("EMPTY! ", "Please, fill contact box.")
+
+        elif result is False:
             messagebox.showerror("INVALID!", "Please, insert numbers in contact box.")
+
+        elif contact_length < 10:
+            messagebox.showwarning("Wrong Entry", "Digits of contact number is lesser than 10.")
+
+        elif contact_length > 10:
+            messagebox.showwarning("Wrong Entry", "Digits of contact number is greater than 10.")
 
         elif user_name_entry.get() == "":
             messagebox.showwarning("EMPTY! ", "Please , fill  username box.")
@@ -140,9 +183,10 @@ def create_my_account():
 
               # filling all entry fields or not
             print("Information are inserted successfully.")
-            messagebox.showinfo("Records insertion", "Information have been inserted successfully.")
+            messagebox.showinfo("Records insertion", "Information have been inserted successfully too.")
             connect_me.commit()
             connect_me.close()
+
             # clearing the entry fields after inserting info
             user_name_entry.delete(0, END)
             l_nam_entry.delete(0, END)
@@ -189,8 +233,11 @@ def create_my_account():
         This returns Registration Form window to previous Signup window.
         :return: None
         """
+        clear_entry()
+        """
         username_entry.delete(0, END)
         password_entry_signup.delete(0, END)
+        """
         global vacant_row
         # assigning the value of vacant_row as 0 because after visiting Registration Form the value of it changes so,
         # its value is made 0 to execute vacant_row <= 30 again from 0
@@ -223,7 +270,7 @@ def create_my_account():
         empty_row()
         user_name = Label(my_frame, text="Username :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
         username = StringVar()
-        print(type(username))
+        #print(type(username))
         user_name.grid(row=11, column=0)
         empty_row()
         password_label = Label(my_frame, text="Password :", bg="#CDC8B1", font=("Times New Roman", 21, 'bold'))
@@ -318,7 +365,7 @@ def create_my_account():
 
 row_num = 0
 # for storing data of a user from profile page
-fetched_income = "0"
+fetched_income = 0
 fetched_expenses = fetched_balance = 0
 # for changing each value after adding or subtracting in balance as income and spend cases
 income = spend = balance = 0
@@ -373,9 +420,7 @@ def submit():
             """
             user_respond_for_quit = messagebox.askyesnocancel("Log out", "Do you want to log out ?")
             if user_respond_for_quit == 1:
-                username_entry.delete(0, END)
-                password_entry_signup.delete(0, END)
-
+                clear_entry()
                 signUp.deiconify()
                 adminAccount.destroy()
 
@@ -405,7 +450,7 @@ def submit():
 
         headings_list = ["First Name", "Last Name", "Gender", "Contact", "Username", "Password", "Oid"]
         # using Treeview to show information in a proper manner.
-        table = ttk.Treeview(frame1, columns=headings_list, show='headings')
+        table = ttk.Treeview(frame1, columns=headings_list, show='headings', height=28)
         for arrange in headings_list:
             table.heading(arrange, text=arrange)
         table.pack(side=LEFT)
@@ -461,15 +506,41 @@ def submit():
              myAccount.configure(bg="black")
              myAccount.resizable(False, False)
 
+             def read_my_files():
+                 # files are created to save values of income , spend and balance
+
+                 with open(str(password_entry_signup.get() + "_income.txt"), "r+") as income_file:
+                     income_file.seek(0)
+                     stored_income_value = income_file.read()
+                     # print("Income from reading txt : ", stored_income_value)
+
+                 global fetched_income
+
+                 fetched_income = stored_income_value
+                 # print("Your income after reading txt file is : ", fetched_income)
+
+                 with open(str(password_entry_signup.get() + "_expenses.txt"), "r+") as expenses_file:
+                     stored_expenses_value = expenses_file.read()
+                     # print("Expenses from reading txt : ", stored_expenses_value)
+                 global fetched_expenses
+                 fetched_expenses = stored_expenses_value
+
+                 with open(str(password_entry_signup.get() + "_balance.txt"), "r+") as balance_file:
+                     stored_balance_value = balance_file.read()
+                     # print("Balance from reading txt  : ", stored_balance_value)
+
+                 global fetched_balance
+                 fetched_balance = stored_balance_value
+
              # now checking whether a file is existing or not. if yes it is True, if not False.
              # This only runs when a new account is created and using for the first time.
              # here how it works, not(...) and not(..) and not(..) ====> not(False) and not(False) and not(False)
              # ====> True and True and True
 
              if not(os.path.isfile(str(password_entry_signup.get() + "_income.txt"))) and\
-                     not(os.path.isfile(str(password_entry_signup.get() + "_income.txt"))) and\
-                     not(os.path.isfile(str(password_entry_signup.get() + "_income.txt"))):
-
+                     not(os.path.isfile(str(password_entry_signup.get() + "_expenses.txt"))) and\
+                     not(os.path.isfile(str(password_entry_signup.get() + "_balance.txt"))):
+                 print("This is creating files for new ones.")
                  # To create 3 different files of the user for once time so, a+ mode is used.
                  with open(str(password_entry_signup.get() + "_income.txt"), "a+") as f:
                      f.write("0")
@@ -480,7 +551,8 @@ def submit():
                  with open(str(password_entry_signup.get() + "_balance.txt"), "a+") as file:
                      file.write("0")
 
-
+             # Note 1: pasted
+             read_my_files()
 
              def open_profile_func():
                  """
@@ -517,32 +589,8 @@ def submit():
                  heading.pack(side=TOP, fill=X, expand=0)
                  heading.config(image=heading_img, compound=LEFT)
 
-
-                 # files are created to save vaules of income , spend and balance
-
-                 with open(str(password_entry_signup.get()+"_income.txt"), "r+") as income_file:
-                     income_file.seek(0)
-                     stored_income_value = income_file.read()
-                     #print("Income from reading txt : ", stored_income_value)
-
-                 global fetched_income
-
-                 fetched_income = stored_income_value
-                 #print("Your income after reading txt file is : ", fetched_income)
-
-                 with open(str(password_entry_signup.get()+"_expenses.txt"), "r+") as expenses_file:
-                     stored_expenses_value = expenses_file.read()
-                     #print("Expenses from reading txt : ", stored_expenses_value)
-                 global fetched_expenses
-                 fetched_expenses = stored_expenses_value
-
-                 with open(str(password_entry_signup.get()+"_balance.txt"), "r+") as balance_file:
-                     stored_balance_value = balance_file.read()
-                     #print("Balance from reading txt  : ", stored_balance_value)
-
-                 global fetched_balance
-                 fetched_balance = stored_balance_value
-
+                 # Note 1: file read and cut from here
+                 read_my_files()
                  # ----------------------- labels are defined -----------------------
                  income_label = Label(bottomFrame, text="Income", font=("courier", 25, "bold"), fg="yellow", bg="green")
                  income_label.grid(row=0, column=0, columnspan=1, padx=50, pady=10)
@@ -716,25 +764,49 @@ def submit():
                          shops_entry.delete(0, END)
                          others_entry.delete(0, END)
 
-                         global income_fetch_first, income, fetched_income
+                         #read_my_files()
 
-                         if income_fetch_first == 0:
+                         global income_fetch_first, income, fetched_income, balance, balance_fetch_first
+
+                         if income_fetch_first == 0 and balance_fetch_first == 0:
+
                              # fetching previous stored income value after opening first
-                             income += total_income + float(fetched_income)
-                             fetched_income =""
+
+                             print("fetched_income after adding budget for the first time : ", fetched_income)
+
+                             income = total_income + float(fetched_income)
+                             fetched_income = 0
+                             print("income after adding buddget for the first time : ", income)
 
                              # changing value of income_fetch_first because not to run this instead this , run else block
                              income_fetch_first += 1
+                             print("icome_fetch_first = ", income_fetch_first)
+
+                             # maintaining balance after adding budget
+                             # fetching previous stored balance after opening first
+                             print("fetched_balance after adding budget for the first time : ", balance)
+                             balance = total_income + float(fetched_balance)
+                             print("balance after adding budget for the first time : ", balance)
+                             # changing value of balance_fetch_first because not to run this instead this , run else block
+                             balance_fetch_first += 1
+                             print("balance_fetched_first = ", balance_fetch_first)
 
                          else:
                              # adding new budget in previous stored income after opening more than first
                              income += total_income
-                             fetched_income = ""
+                             print("income after adding budget more than for the first time = ", income)
+                             fetched_income = 0
+
+
+                             # maintaining balance after adding budget
+                             # adding balance in previous stored income after opening more than first
+                             balance += total_income
+                             print("balance after adding budget more than for the first time = ", balance)
 
                          # overwriting the value of income by new value in created file
                          with open(str(password_entry_signup.get()+"_income.txt"), "w+") as income_file:
                              income_file.write(str(income))
-
+                         """"
                          # maintaining balance after adding budget
                          global balance, balance_fetch_first
                          if balance_fetch_first == 0:
@@ -748,6 +820,7 @@ def submit():
                              # adding balance in previous stored income after opening more than first
                              balance += total_income
 
+                         """
                          with open(str(password_entry_signup.get() + "_balance.txt"), "r+") as balance_file:
                              balance_file.write(str(balance))
 
@@ -888,22 +961,18 @@ def submit():
                      :return: None
                      """
                      # checking whether entered information in 'price' entry are digits or not
-                     for checker in price_entry.get():
-                         if checker.isdigit():
-                             inserted_price = True
-                         else:
-                             inserted_price = False
-                             break
+                     price_result = digit_checker(price_entry)
+
                      if price_entry.get() == "":
                          messagebox.showerror("Empty", "Price box is empty. Please , fill it.")
 
-                     elif inserted_price is False:
+                     elif price_result is False:
                          messagebox.showerror("Invalid", "Please , insert digits only in it.")
 
                      else:
 
                          # -------- as a whole maintaining balance after adding expenses budget so, subtracting now --------
-
+                         read_my_files()
 
                          global balance
                          # now checking whether a file is existing or not. if yes it is True, if not False.
@@ -913,21 +982,21 @@ def submit():
 
                          # now , balance stored in new variable because just to show warning if balance is low
                          current_balance = balance
-                         print(f"Your ba. {balance}")
-                         balance -= float(price_entry.get())
 
+                         balance -= float(price_entry.get())
+                         print(f"Your balance after spending : {balance}")
                          # checking balance is lesser than 0 , if yes show warning , if no do calcaulation
                          if balance >= 0:
                              global spend, expense_fetch_first
 
                              if expense_fetch_first == 0:
 
-                                spend += float(price_entry.get()) + float(fetched_expenses)
+                                spend = float(price_entry.get()) + float(fetched_expenses)
                                 expense_fetch_first += 1
 
                              else:
                                  spend += float(price_entry.get())
-
+                                 print("after spending = ", spend)
                              with open(str(password_entry_signup.get() + "_expenses.txt"), "w+") as expenses_file:
                                  expenses_file.write(str(spend))
 
@@ -1078,13 +1147,10 @@ def submit():
                      :return: None
                      """
                      # checking whether entered oid number in entry are digits or not
-                     for checking in using_oid_entry.get():
-                         if checking.isdigit():
-                             inserted_oid = True
-                         else:
-                             inserted_oid = False
-                             break
-                     print(type(using_oid_entry.get()))
+
+                     oid_result = digit_checker(using_oid_entry)
+
+                     #print(type(using_oid_entry.get()))
 
                      # ------------------ retrieving data from database -----------------------
                      connect_me = sqlite3.connect("Accounts_details_holder.db")
@@ -1142,9 +1208,10 @@ def submit():
                      elif again_password_entry.get() != password_entry_signup.get():
                          messagebox.showerror("Invalid",
                                                 "Your password does not match with our database. Please, insert it again.")
-                     elif inserted_oid is False:
+                     elif oid_result is False:
                          messagebox.showerror("Invalid oid", "Please , insert in digits only.")
-                     # chaing data type of using_oid_entry from str to int for copmarison as data type of actual_oid is int
+
+                     # changing data type of using_oid_entry from str to int for copmarison as data type of actual_oid is int
                      elif int(using_oid_entry.get()) != actual_oid:
                          messagebox.showerror("Invalid oid", "Inserted oid number does not match.")
 
@@ -1172,8 +1239,7 @@ def submit():
                          again_new_password_entry.delete(0, END)
                          again_confirm_password_entry.delete(0, END)
                          using_oid_entry.delete(0, END)
-                         username_entry.delete(0, END)
-                         password_entry_signup.delete(0, END)
+                         clear_entry()
 
                          signUp.deiconify()
                          setting_win.destroy()
@@ -1330,9 +1396,11 @@ def submit():
                  """
                  response_user = messagebox.askyesno("Log out", "Do you want to Log out ?")
                  if response_user == 1:
+                     global income_fetch_first, balance_fetch_first, expense_fetch_first
+                     income_fetch_first = balance_fetch_first = expense_fetch_first = 0
+
+                     clear_entry()
                      signUp.deiconify()
-                     username_entry.delete(0, END)
-                     password_entry_signup.delete(0, END)
                      myAccount.destroy()
 
              def dateToday():
