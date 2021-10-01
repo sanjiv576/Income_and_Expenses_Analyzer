@@ -45,6 +45,8 @@ After, it is downloaded its zip file  or cloned, you must install **third-party 
 > This is for showing calendar.
 2. **pip install pytest**
 > This is for pytesting.
+3. **pip install twilio**
+> This is for sending OTP code in the client's mobile number for confirmation.
 
 **Note:**
 #### Run 'signup.py' module not other modules.
@@ -54,12 +56,16 @@ After, it is downloaded its zip file  or cloned, you must install **third-party 
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u2.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u3.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u4.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/o1.png)
+![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/02.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u5.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u6.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u7.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u8.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u9.png)
 ![Tux, the Linux mascot](https://github.com/sanjiv576/Income_and_Expenses_Analyzer/blob/master/u10.png)
+
+
 <br>
 
 ## Pytest testing
