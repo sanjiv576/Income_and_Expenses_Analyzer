@@ -1,17 +1,26 @@
 """
 This module accepts username and password to signup.
 """
+# for GUI design
 from tkinter import *
+# for messagebox
 from tkinter import messagebox
+# for database
 import sqlite3
+# for Treeview
 from tkinter import ttk
 # for checking whether a file is existing or not
 import os.path
 # now allowing to access variables and functions which interact strongly with a python interpreter (this is optional)
 import sys
+# for OTP generation
+import random
 
 # using third party library , for installation ===> pip install tkcalendar
 from tkcalendar import *
+
+# using third party library, for installation ===> pip install twilio
+from twilio.rest import Client
 
 signUp = Tk()
 signUp.title("SIGNUP")
@@ -88,6 +97,8 @@ def clear_entry():
 # creating a new window for registration as clicked on 'Don't have an account ?' button
 # -----------------------------------Coding for Registration Form starts ----------------------------------
 vacant_row = 0
+# for OTP generation
+otp = ""
 def create_my_account():
     """
     This accepts user's full name, gender, username and password as string to create an account for official use.
@@ -122,7 +133,7 @@ def create_my_account():
 
         # now checking length of the contact is equal to ten or not
         contact_length = len(str(contact_entry.get()))
-        print(contact_length)
+        #print(contact_length)
 
         if f_nam_entry.get() == "" and l_nam_entry.get() == "" and user_name_entry.get() == "" and contact_entry.get() == "" and \
                 password_entry.get() == "" and conf_password_entry.get() == "":
@@ -160,45 +171,125 @@ def create_my_account():
 
         # checking password and confirm password match or not
         elif conf_password_entry.get() != password_entry.get():
-            messagebox.showerror("INCORRECT PASSWORD! ", "Password and Confirm password do not match. Please, enter again.")
+            messagebox.showerror("INCORRECT PASSWORD! ",
+                                 "Password and Confirm password do not match. Please, enter again.")
 
         else:
-            messagebox.showinfo("Account Created", "Congratulation! Your account has been created successfully.")
+            messagebox.showinfo("OTP Sent",
+                                "OTP has been sent to the provided contact number. Please, check on your mobile phone.")
 
-            # Insertion database is here
+            otp_win = Toplevel()
+            otp_win.geometry("600x400")
 
-            # -------------All details are inserted into the table of Database i.e registration_details-------------
-            connect_me = sqlite3.connect("Accounts_details_holder.db")
-            cu = connect_me.cursor()
-            # inserting details into the table
-            cu.execute("INSERT INTO registration_details_holder VALUES(:f_name, :l_name, :gender_type,"
-                         ":contact_num, :username_entered, :password_entered)", {
-                  'f_name':f_nam_entry.get(),
-                  'l_name':l_nam_entry.get(),
-                  'gender_type':selected_gender,
-                  'contact_num':contact_entry.get(),
-                  'username_entered':user_name_entry.get(),
-                  'password_entered':password_entry.get()
-              })
 
-              # filling all entry fields or not
-            print("Information are inserted successfully.")
-            messagebox.showinfo("Records insertion", "Information have been inserted successfully too.")
-            connect_me.commit()
-            connect_me.close()
+            def for_verify():
+                """
+                This function checks whether inserted OTP code is correct or not,
+                if correct, it allows to create account successfully.
+                :return: None
+                """
+                if user_otp.get() == otp:
+                    messagebox.showinfo("OTP Verified", "Your account has been verified.")
+                    user_otp.delete(0, END)
 
-            # clearing the entry fields after inserting info
-            user_name_entry.delete(0, END)
-            l_nam_entry.delete(0, END)
-            #selected_gender.delete(0, END)
-            contact_entry.delete(0, END)
-            user_name_entry.delete(0, END)
-            password_entry.delete(0, END)
+                    messagebox.showinfo("Account Created",
+                                        "Congratulation! Your account has been created successfully.")
 
-         # revealing Signup window after creating the account for login
-            signUp.deiconify()
-            # quitting the Registration Form window after successfully creating account.
-            register.destroy()
+                    # Insertion database is here
+
+                    # -------------All details are inserted into the table of Database i.e registration_details----
+                    connect_me = sqlite3.connect("Accounts_details_holder.db")
+                    cu = connect_me.cursor()
+                    # inserting details into the table
+                    cu.execute("INSERT INTO registration_details_holder VALUES(:f_name, :l_name, :gender_type,"
+                               ":contact_num, :username_entered, :password_entered)", {
+                                   'f_name': f_nam_entry.get(),
+                                   'l_name': l_nam_entry.get(),
+                                   'gender_type': selected_gender,
+                                   'contact_num': contact_entry.get(),
+                                   'username_entered': user_name_entry.get(),
+                                   'password_entered': password_entry.get()
+                               })
+
+                    # filling all entry fields or not
+                    print("Information are inserted successfully.")
+                    #messagebox.showinfo("Records insertion", "Information have been inserted successfully too.")
+                    connect_me.commit()
+                    connect_me.close()
+
+                    # clearing the entry fields after inserting info
+                    user_name_entry.delete(0, END)
+                    l_nam_entry.delete(0, END)
+                    # selected_gender.delete(0, END)
+                    contact_entry.delete(0, END)
+                    user_name_entry.delete(0, END)
+                    password_entry.delete(0, END)
+
+                    # revealing Signup window after creating the account for login
+                    signUp.deiconify()
+                    # quitting OTP window
+                    otp_win.destroy()
+                    # quitting the Registration Form window after successfully creating account.
+                    register.destroy()
+
+                elif user_otp.get() != otp:
+                    messagebox.showerror("No verification", "Provided OTP is incorrect. Try again or resend the code.")
+                    user_otp.delete(0, END)
+
+                else:
+                    pass
+
+            def send_code():
+                """
+                This function generates 6-digit random OTP code for verification
+                :return: None
+                """
+                try:
+                    global otp
+                    otp = ""
+                    for i in range(4):
+                        otp += str(random.randint(0, 9))
+
+                    print("Your OTP is :", otp)
+                    # account_sid and auth_token are given by twilio website after registration on there
+                    account_sid = 'AC29bd93b06b1cb826f1016e60caf42404'
+                    auth_token = '34cb83be0bf2d2fbb29b6636fd4cfe2f'
+                    client = Client(account_sid, auth_token)
+                    # Note: for verification --> contact number of Nepal country is only valid so, +977 is
+                    message_send = client.messages.create(
+                        body="Dear "+str(f_nam_entry.get())+","+"Your OTP code is: " + str(otp) + "\n From Income and Expenses Analyzer",
+                        from_="+18787887310",
+                        to="+977" + str(contact_entry.get())
+                    )
+
+                except (AttributeError, NameError, SyntaxError, TypeError, ValueError, BaseException) as guide_msg:
+                    print(guide_msg)
+                    print(type(guide_msg))
+
+
+            def resend_code():
+                """
+                This function resends OTP code by calling send_code after showing message.
+                :return: None
+                """
+                messagebox.showinfo("OTP Resent", "New OTP has been sent. Please, check on your mobile phone.")
+                send_code()
+
+
+            send_code()
+            info_label = Label(otp_win, text="Enter your OTP code for verification ", font=("times", 24, "bold"))
+            info_label.pack(padx=20, pady=20)
+            user_otp = Entry(otp_win, font=("times", 20, "italic"), bd=5, relief=SUNKEN)
+            user_otp.pack(padx=20, pady=20)
+
+            send_btn = Button(otp_win, text="Verify", font=("times", 24, "bold"), command=for_verify,
+                              highlightbackground="green")
+            send_btn.pack(padx=20, pady=20, ipadx=8, ipady=8)
+
+            resend_btn = Button(otp_win, text="Resend Code", font=("times", 24, "bold"), command=resend_code,
+                                highlightbackground="yellow")
+            resend_btn.pack(padx=20, pady=20, ipadx=8, ipady=8)
+            otp_win.mainloop()
 
 
     # function to show messages for exit window as clicked on 'EXIT' button.
@@ -540,7 +631,7 @@ def submit():
              if not(os.path.isfile(str(password_entry_signup.get() + "_income.txt"))) and\
                      not(os.path.isfile(str(password_entry_signup.get() + "_expenses.txt"))) and\
                      not(os.path.isfile(str(password_entry_signup.get() + "_balance.txt"))):
-                 print("This is creating files for new ones.")
+                 #print("This is creating files for new ones.")
                  # To create 3 different files of the user for once time so, a+ mode is used.
                  with open(str(password_entry_signup.get() + "_income.txt"), "a+") as f:
                      f.write("0")
@@ -753,7 +844,7 @@ def submit():
                                         float(animal_husbandy_entry.get()) + float(vegetable_farming_entry.get()) + \
                                         float(shops_entry.get()) + float(others_entry.get()) + float(house_rent_entry.get())
 
-                         print("Total income is : ", total_income)
+                         #print("Total income is : ", total_income)
 
                          # clearing the entry fields after inserting info
                          salary_entry.delete(0, END)
@@ -772,36 +863,36 @@ def submit():
 
                              # fetching previous stored income value after opening first
 
-                             print("fetched_income after adding budget for the first time : ", fetched_income)
+                             #print("fetched_income after adding budget for the first time : ", fetched_income)
 
                              income = total_income + float(fetched_income)
                              fetched_income = 0
-                             print("income after adding buddget for the first time : ", income)
+                             #print("income after adding buddget for the first time : ", income)
 
                              # changing value of income_fetch_first because not to run this instead this , run else block
                              income_fetch_first += 1
-                             print("icome_fetch_first = ", income_fetch_first)
+                             #print("icome_fetch_first = ", income_fetch_first)
 
                              # maintaining balance after adding budget
                              # fetching previous stored balance after opening first
-                             print("fetched_balance after adding budget for the first time : ", balance)
+                             #print("fetched_balance after adding budget for the first time : ", balance)
                              balance = total_income + float(fetched_balance)
-                             print("balance after adding budget for the first time : ", balance)
+                             #print("balance after adding budget for the first time : ", balance)
                              # changing value of balance_fetch_first because not to run this instead this , run else block
                              balance_fetch_first += 1
-                             print("balance_fetched_first = ", balance_fetch_first)
+                             #print("balance_fetched_first = ", balance_fetch_first)
 
                          else:
                              # adding new budget in previous stored income after opening more than first
                              income += total_income
-                             print("income after adding budget more than for the first time = ", income)
+                             #print("income after adding budget more than for the first time = ", income)
                              fetched_income = 0
 
 
                              # maintaining balance after adding budget
                              # adding balance in previous stored income after opening more than first
                              balance += total_income
-                             print("balance after adding budget more than for the first time = ", balance)
+                             #print("balance after adding budget more than for the first time = ", balance)
 
                          # overwriting the value of income by new value in created file
                          with open(str(password_entry_signup.get()+"_income.txt"), "w+") as income_file:
@@ -984,7 +1075,7 @@ def submit():
                          current_balance = balance
 
                          balance -= float(price_entry.get())
-                         print(f"Your balance after spending : {balance}")
+                         #print(f"Your balance after spending : {balance}")
                          # checking balance is lesser than 0 , if yes show warning , if no do calcaulation
                          if balance >= 0:
                              global spend, expense_fetch_first
@@ -996,7 +1087,7 @@ def submit():
 
                              else:
                                  spend += float(price_entry.get())
-                                 print("after spending = ", spend)
+                                 #print("after spending = ", spend)
                              with open(str(password_entry_signup.get() + "_expenses.txt"), "w+") as expenses_file:
                                  expenses_file.write(str(spend))
 
