@@ -19,6 +19,7 @@ This application includes following features:
 - Insertion of both income and expenses.
 - Calculation of current balance after adding budget and expenditure.
 - Pytests.
+- Sends OTP code for verification
 
 ## Tools Used
 1. **Python programming language**
